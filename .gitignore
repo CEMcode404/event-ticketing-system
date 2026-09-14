@@ -1,0 +1,40 @@
+# --- Terraform ---
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+.terraform.lock.hcl
+
+# --- Java / Maven ---
+api/target/
+lambda/target/
+*.class
+hs_err_pid*
+# Note: mvnw, mvnw.cmd, and .mvn/ are intentionally NOT ignored — the
+# Maven wrapper should be committed so anyone cloning the repo can build
+# without installing Maven themselves.
+
+# --- Frontend (once scaffolded) ---
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+
+# --- IDE ---
+.idea/
+*.iml
+.vscode/
+.DS_Store
+
+# --- Secrets (never commit real values) ---
+*.pem
+*.env
+.env.*
