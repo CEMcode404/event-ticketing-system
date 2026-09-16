@@ -1,3 +1,58 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #15111f;
+  --color-bg-panel: #1e1830;
+  --color-ink: #f6f3fb;
+  --color-muted: #a79bc4;
+  --color-accent: #f8b73c;
+  --color-accent-ink: #1a1327;
+  --color-urgent: #ef4a63;
+  --color-border: #322a47;
+
+  --font-display: "Big Shoulders Display", sans-serif;
+  --font-body: "Work Sans", system-ui, sans-serif;
+}
+
 body {
-  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+}
+
+.ticket-perforation {
+  position: absolute;
+  height: 12px;
+  background: radial-gradient(circle at 6px 6px, transparent 4px, var(--color-bg) 4.5px) repeat-x;
+  background-size: 16px 12px;
+}
+
+.hero-stub-perforation {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 14px;
+  transform: translateY(-50%);
+  background: radial-gradient(circle at 7px 7px, transparent 5px, var(--color-bg-panel) 5.5px) repeat-x;
+  background-size: 18px 14px;
+}
+
+.hero-stub-perforation::before,
+.hero-stub-perforation::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 12px;
+  border-radius: 50%;
+  background: var(--color-bg);
+}
+
+.hero-stub-perforation::before {
+  left: -6px;
+}
+
+.hero-stub-perforation::after {
+  right: -6px;
 }
