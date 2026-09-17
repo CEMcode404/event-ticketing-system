@@ -12,6 +12,10 @@ const MOCK_EVENTS: EventSummary[] = [
   { id: "4", name: "Radio Static Live", saleOpensAt: "2026-11-09T18:00:00Z" },
 ];
 
+const sortedEvents = [...MOCK_EVENTS].sort(
+  (a, b) => new Date(a.saleOpensAt).getTime() - new Date(b.saleOpensAt).getTime(),
+);
+
 export function HomePage() {
   return (
     <div className="flex min-h-svh flex-col">
@@ -41,9 +45,9 @@ export function HomePage() {
 
       <section id="events" className="mx-auto w-full max-w-6xl flex-1 px-6 pb-24">
         <h2 className="font-display text-4xl font-bold">Upcoming</h2>
-        <p className="mt-2 mb-8 text-muted">Sorted by when the on-sale opens.</p>
+        <p className="mt-2 mb-8 text-muted">Catch these before the queue opens.</p>
         <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-5">
-          {MOCK_EVENTS.map((event) => (
+          {sortedEvents.map((event) => (
             <EventCard key={event.id} event={event} />
           ))}
         </div>

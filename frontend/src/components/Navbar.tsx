@@ -1,4 +1,8 @@
+import { useAuth0 } from "@auth0/auth0-react";
+
 export function Navbar() {
+  const { isAuthenticated, isLoading, logout } = useAuth0();
+
   return (
     <header className="sticky top-0 z-10 border-b border-border bg-bg">
       <div className="mx-auto flex max-w-6xl items-center gap-8 px-6 py-5">
@@ -11,9 +15,19 @@ export function Navbar() {
             About
           </a>
         </nav>
-        <a href="/admin/login" className="text-[15px] text-muted hover:text-ink">
-          Admin sign in
-        </a>
+                {isLoading ? null : isAuthenticated ? (
+          <button
+            type="button"
+            onClick={() => logout({ logoutParams: { returnTo: window.location.origin } })}
+            className="text-[15px] text-muted hover:text-ink"
+          >
+            Log out
+          </button>
+        ) : (
+          <a href="/admin/login" className="text-[15px] text-muted hover:text-ink">
+            Sign in
+          </a>
+        )}
       </div>
     </header>
   );

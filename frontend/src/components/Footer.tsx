@@ -14,7 +14,7 @@ export function Footer() {
             Terms
           </a>
         </nav>
-        <span className="text-[13px] text-muted">A hobby project — not a real ticketing platform.</span>
+        <span className="text-[13px] text-muted">© 2026 Lineup. All rights reserved.</span>
       </div>
     </footer>
   );
