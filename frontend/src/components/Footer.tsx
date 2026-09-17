@@ -2,6 +2,7 @@ export function Footer() {
   return (
     <footer className="border-t border-border bg-bg-panel">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-6 px-6 py-8">
+        <img src="/logo.svg" alt="" className="h-6 w-6" />
         <span className="font-display text-lg font-bold">Lineup</span>
         <nav className="flex flex-1 gap-5">
           <a href="/about" className="text-sm text-muted hover:text-ink">
