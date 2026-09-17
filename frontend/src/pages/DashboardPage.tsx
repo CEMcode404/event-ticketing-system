@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuthedFetch } from "../hooks/useAuthedFetch";
 import { Navbar } from "../components/Navbar";
 
@@ -23,6 +24,7 @@ function formatDateTime(iso: string): string {
 
 export function DashboardPage() {
   const authedFetch = useAuthedFetch();
+  const navigate = useNavigate();
 
   const [events, setEvents] = useState<EventResponse[]>([]);
   const [loading, setLoading] = useState(true);
@@ -39,11 +41,13 @@ export function DashboardPage() {
     <div className="min-h-svh bg-bg">
       <Navbar />
 
-      <div className="mx-auto max-w-3xl px-6 py-12">
+      <div className="mx-auto max-w-6xl px-6 py-12">
         <div className="flex items-center justify-between">
           <h1 className="font-display text-4xl font-bold">Events</h1>
-          {/* TODO: hook up once the create-event form exists */}
-          <button className="rounded bg-accent px-5 py-2.5 font-semibold text-accent-ink">
+          <button
+            onClick={() => navigate("/admin/events/new")}
+            className="rounded bg-accent px-5 py-2.5 font-semibold text-accent-ink"
+          >
             New event
           </button>
         </div>
@@ -56,7 +60,7 @@ export function DashboardPage() {
         )}
 
         {!loading && !error && events.length > 0 && (
-          <ul className="mt-8 divide-y divide-border rounded border border-border">
+          <ul className="mt-8 max-w-2xl divide-y divide-border rounded border border-border">
             {events.map((event) => (
               <li key={event.id} className="flex items-center justify-between px-5 py-4">
                 <span className="font-medium">{event.name}</span>

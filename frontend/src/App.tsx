@@ -3,6 +3,7 @@ import { Auth0Provider, type AppState } from "@auth0/auth0-react";
 import { HomePage } from "./pages/HomePage";
 import { LoginPage } from "./pages/LoginPage";
 import { DashboardPage } from "./pages/DashboardPage";
+import { CreateEventPage } from "./pages/CreateEventPage";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 
 function App() {
@@ -32,6 +33,14 @@ function App() {
           element={
             <ProtectedRoute>
               <DashboardPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/events/new"
+          element={
+            <ProtectedRoute>
+              <CreateEventPage />
             </ProtectedRoute>
           }
         />
