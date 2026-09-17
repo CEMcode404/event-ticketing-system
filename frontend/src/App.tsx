@@ -1,15 +1,42 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Routes, Route, useNavigate } from "react-router-dom";
+import { Auth0Provider, type AppState } from "@auth0/auth0-react";
 import { HomePage } from "./pages/HomePage";
 import { LoginPage } from "./pages/LoginPage";
+import { DashboardPage } from "./pages/DashboardPage";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 
 function App() {
+  const navigate = useNavigate();
+
+  function onRedirectCallback(appState?: AppState) {
+    navigate(appState?.returnTo ?? "/admin");
+  }
+
   return (
-    <BrowserRouter>
+    <Auth0Provider
+      domain={import.meta.env.VITE_AUTH0_DOMAIN}
+      clientId={import.meta.env.VITE_AUTH0_CLIENT_ID}
+      authorizationParams={{
+        redirect_uri: window.location.origin,
+        audience: import.meta.env.VITE_AUTH0_AUDIENCE,
+      }}
+      onRedirectCallback={onRedirectCallback}
+      useRefreshTokens={true}
+      cacheLocation="localstorage"
+    >
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/admin/login" element={<LoginPage />} />
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute>
+              <DashboardPage />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
-    </BrowserRouter>
+    </Auth0Provider>
   );
 }
 

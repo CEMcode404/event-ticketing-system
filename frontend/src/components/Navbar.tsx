@@ -20,7 +20,7 @@ export function Navbar() {
           <button
             type="button"
             onClick={() => logout({ logoutParams: { returnTo: window.location.origin } })}
-            className="text-[15px] text-muted hover:text-ink"
+            className="text-[15px] text-muted hover:text-ink cursor-pointer"
           >
             Log out
           </button>

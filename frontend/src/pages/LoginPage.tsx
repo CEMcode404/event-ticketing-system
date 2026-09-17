@@ -10,11 +10,9 @@ export function LoginPage() {
     if (isLoading) return;
 
     if (isAuthenticated) {
-      // TODO: send to /admin once that page exists — home is a
-      // placeholder destination for now.
-      navigate("/");
+      navigate("/admin");
     } else {
-      loginWithRedirect();
+      loginWithRedirect({ appState: { returnTo: "/admin" } });
     }
   }, [isLoading, isAuthenticated, loginWithRedirect, navigate]);
 
