@@ -1,7 +1,10 @@
 package com.eventticketing.entity;
 
+import com.eventticketing.enums.EventStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -22,16 +25,29 @@ public class Event {
     @Column(nullable = false)
     private String name;
 
+    @Column(nullable = false)
+    private String venue;
+
+    @Column(columnDefinition = "TEXT")
+    private String description;
+
     @Column(name = "sale_opens_at", nullable = false)
     private Instant saleOpensAt;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private EventStatus status = EventStatus.DRAFT;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
-    protected Event() {}
+    protected Event() {
+    }
 
-    public Event(String name, Instant saleOpensAt) {
+    public Event(String name, String venue, String description, Instant saleOpensAt) {
         this.name = name;
+        this.venue = venue;
+        this.description = description;
         this.saleOpensAt = saleOpensAt;
     }
 
@@ -52,12 +68,36 @@ public class Event {
         this.name = name;
     }
 
+    public String getVenue() {
+        return venue;
+    }
+
+    public void setVenue(String venue) {
+        this.venue = venue;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
     public Instant getSaleOpensAt() {
         return saleOpensAt;
     }
 
     public void setSaleOpensAt(Instant saleOpensAt) {
         this.saleOpensAt = saleOpensAt;
+    }
+
+    public EventStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(EventStatus status) {
+        this.status = status;
     }
 
     public Instant getCreatedAt() {

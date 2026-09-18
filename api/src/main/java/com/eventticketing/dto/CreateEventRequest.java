@@ -8,6 +8,8 @@ import java.time.Instant;
 
 public record CreateEventRequest(
         @NotBlank String name,
+        @NotBlank String venue,
+        String description,
         @NotNull @Future Instant saleOpensAt
 ) {
 }
