@@ -1,88 +1,116 @@
 package com.eventticketing.entity;
 
 import com.eventticketing.enums.SeatStatus;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbSecondaryPartitionKey;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbSecondarySortKey;
 
 import java.util.UUID;
 
-@Entity
-@Table(name = "seats")
+@DynamoDbBean
 public class Seat {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "event_id", nullable = false)
-    private Event event;
-
-    @Column(nullable = false)
+    private String id;
+    private String eventId;
     private String section;
-
-    @Column(name = "row_label", nullable = false)
     private String rowLabel;
-
-    @Column(name = "seat_number", nullable = false)
     private Integer seatNumber;
-
-    @Column(name = "price_cents", nullable = false)
     private Integer priceCents;
+    private String status;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private SeatStatus status = SeatStatus.AVAILABLE;
+    private String heldUntil;
 
-    protected Seat() {
+    private String holdToken;
+
+    public Seat() {
+        // required by the DynamoDB Enhanced Client
     }
 
-    public Seat(Event event, String section, String rowLabel, Integer seatNumber, Integer priceCents) {
-        this.event = event;
-        this.section = section;
-        this.rowLabel = rowLabel;
-        this.seatNumber = seatNumber;
-        this.priceCents = priceCents;
+    public static Seat newAvailable(UUID eventId, String section, String rowLabel, Integer seatNumber, Integer priceCents) {
+        Seat seat = new Seat();
+        seat.id = UUID.randomUUID().toString();
+        seat.eventId = eventId.toString();
+        seat.section = section;
+        seat.rowLabel = rowLabel;
+        seat.seatNumber = seatNumber;
+        seat.priceCents = priceCents;
+        seat.status = SeatStatus.AVAILABLE.name();
+        return seat;
     }
 
-    public UUID getId() {
+    @DynamoDbPartitionKey
+    public String getId() {
         return id;
     }
 
-    public Event getEvent() {
-        return event;
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    @DynamoDbSecondaryPartitionKey(indexNames = "EventStatusIndex")
+    public String getEventId() {
+        return eventId;
+    }
+
+    public void setEventId(String eventId) {
+        this.eventId = eventId;
     }
 
     public String getSection() {
         return section;
     }
 
+    public void setSection(String section) {
+        this.section = section;
+    }
+
     public String getRowLabel() {
         return rowLabel;
+    }
+
+    public void setRowLabel(String rowLabel) {
+        this.rowLabel = rowLabel;
     }
 
     public Integer getSeatNumber() {
         return seatNumber;
     }
 
+    public void setSeatNumber(Integer seatNumber) {
+        this.seatNumber = seatNumber;
+    }
+
     public Integer getPriceCents() {
         return priceCents;
     }
 
-    public SeatStatus getStatus() {
+    public void setPriceCents(Integer priceCents) {
+        this.priceCents = priceCents;
+    }
+
+    @DynamoDbSecondarySortKey(indexNames = "EventStatusIndex")
+    public String getStatus() {
         return status;
     }
 
-    public void setStatus(SeatStatus status) {
+    public void setStatus(String status) {
         this.status = status;
+    }
+
+    public String getHeldUntil() {
+        return heldUntil;
+    }
+
+    public void setHeldUntil(String heldUntil) {
+        this.heldUntil = heldUntil;
+    }
+
+    public String getHoldToken() {
+        return holdToken;
+    }
+
+    public void setHoldToken(String holdToken) {
+        this.holdToken = holdToken;
     }
 }

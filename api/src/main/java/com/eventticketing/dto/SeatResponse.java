@@ -15,12 +15,12 @@ public record SeatResponse(
 ) {
     public static SeatResponse from(Seat seat) {
         return new SeatResponse(
-                seat.getId(),
+                UUID.fromString(seat.getId()),
                 seat.getSection(),
                 seat.getRowLabel(),
                 seat.getSeatNumber(),
                 seat.getPriceCents(),
-                seat.getStatus()
+                SeatStatus.valueOf(seat.getStatus())
         );
     }
 }

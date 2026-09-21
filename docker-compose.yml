@@ -30,5 +30,16 @@ services:
       timeout: 5s
       retries: 10
 
+  dynamodb:
+    image: amazon/dynamodb-local:latest
+    container_name: waitroom-dynamodb
+    restart: unless-stopped
+    command: "-jar DynamoDBLocal.jar -dbPath /home/dynamodblocal/data -sharedDb"
+    ports:
+      - "8000:8000"
+    volumes:
+      - dynamodb_data:/home/dynamodblocal/data
+
 volumes:
   mysql_data:
+  dynamodb_data:
