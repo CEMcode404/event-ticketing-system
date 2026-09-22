@@ -3,10 +3,15 @@ import { useNavigate } from "react-router-dom";
 import { useAuthedFetch } from "../hooks/useAuthedFetch";
 import { Navbar } from "../components/Navbar";
 
+type EventStatus = "DRAFT" | "PUBLISHED" | "SUSPENDED" | "CANCELLED";
+
 interface EventResponse {
   id: string;
   name: string;
+  venue: string;
+  description: string | null;
   saleOpensAt: string;
+  status: EventStatus;
   createdAt: string;
 }
 
@@ -21,6 +26,15 @@ function formatDateTime(iso: string): string {
     timeStyle: "short",
   });
 }
+
+// Status text color only, for now — actions (publish/suspend/cancel
+// buttons) are a separate follow-up, not built yet.
+const STATUS_COLOR: Record<EventStatus, string> = {
+  DRAFT: "text-muted",
+  PUBLISHED: "text-accent",
+  SUSPENDED: "text-urgent",
+  CANCELLED: "text-urgent",
+};
 
 export function DashboardPage() {
   const authedFetch = useAuthedFetch();
@@ -63,8 +77,14 @@ export function DashboardPage() {
           <ul className="mt-8 max-w-2xl divide-y divide-border rounded border border-border">
             {events.map((event) => (
               <li key={event.id} className="flex items-center justify-between px-5 py-4">
-                <span className="font-medium">{event.name}</span>
-                <span className="text-sm text-muted">On sale {formatDateTime(event.saleOpensAt)}</span>
+                <div>
+                  <span className="font-medium">{event.name}</span>
+                  <p className="mt-0.5 text-sm text-muted">{event.venue}</p>
+                </div>
+                <div className="text-right">
+                  <span className="text-sm text-muted">On sale {formatDateTime(event.saleOpensAt)}</span>
+                  <p className={`mt-0.5 text-xs font-semibold ${STATUS_COLOR[event.status]}`}>{event.status}</p>
+                </div>
               </li>
             ))}
           </ul>

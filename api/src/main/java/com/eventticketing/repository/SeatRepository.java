@@ -13,6 +13,7 @@ import software.amazon.awssdk.enhanced.dynamodb.model.CreateTableEnhancedRequest
 import software.amazon.awssdk.enhanced.dynamodb.model.EnhancedGlobalSecondaryIndex;
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
 import software.amazon.awssdk.enhanced.dynamodb.model.UpdateItemEnhancedRequest;
+import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 import software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException;
 import software.amazon.awssdk.services.dynamodb.model.Projection;
 import software.amazon.awssdk.services.dynamodb.model.ProjectionType;
@@ -30,6 +31,8 @@ import java.util.stream.Collectors;
 
 @Repository
 public class SeatRepository {
+
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(SeatRepository.class);
 
     private static final String TABLE_NAME = "Seats";
     private static final String GSI_NAME = "EventStatusIndex";
@@ -54,7 +57,8 @@ public class SeatRepository {
                             .build())
                     .build());
         } catch (ResourceInUseException alreadyExists) {
-            // Fine — table was created on a previous startup.
+        } catch (Exception e) {
+            log.error("Could not create/verify the Seats DynamoDB table at startup", e);
         }
     }
 
@@ -95,9 +99,9 @@ public class SeatRepository {
         seat.setHeldUntil(now.plus(ttl).toString());
         seat.setHoldToken(holdToken);
 
-        Map<String, software.amazon.awssdk.services.dynamodb.model.AttributeValue> expressionValues = new HashMap<>();
-        expressionValues.put(":now", software.amazon.awssdk.services.dynamodb.model.AttributeValue.builder().s(now.toString()).build());
-        expressionValues.put(":available", software.amazon.awssdk.services.dynamodb.model.AttributeValue.builder().s(SeatStatus.AVAILABLE.name()).build());
+        Map<String, AttributeValue> expressionValues = new HashMap<>();
+        expressionValues.put(":now", AttributeValue.builder().s(now.toString()).build());
+        expressionValues.put(":available", AttributeValue.builder().s(SeatStatus.AVAILABLE.name()).build());
 
         Expression condition = Expression.builder()
                 .expression("#status = :available AND (attribute_not_exists(heldUntil) OR heldUntil < :now)")

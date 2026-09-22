@@ -5,12 +5,16 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration;
+import software.amazon.awssdk.core.retry.RetryMode;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
+import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClientBuilder;
 
 import java.net.URI;
+import java.time.Duration;
 
 @Configuration
 public class DynamoDbConfig {
@@ -35,7 +39,13 @@ public class DynamoDbConfig {
     @Bean
     public DynamoDbClient dynamoDbClient() {
         DynamoDbClientBuilder builder = DynamoDbClient.builder()
-                .region(Region.of(region));
+                .region(Region.of(region))
+                .httpClient(UrlConnectionHttpClient.create())
+                .overrideConfiguration(ClientOverrideConfiguration.builder()
+                        .apiCallTimeout(Duration.ofSeconds(6))
+                        .apiCallAttemptTimeout(Duration.ofSeconds(3))
+                        .retryStrategy(RetryMode.STANDARD)
+                        .build());
 
         if (!endpoint.isBlank()) {
             builder.endpointOverride(URI.create(endpoint));

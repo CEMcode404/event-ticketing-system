@@ -9,6 +9,8 @@ export function CreateEventPage() {
   const navigate = useNavigate();
 
   const [name, setName] = useState("");
+  const [venue, setVenue] = useState("");
+  const [description, setDescription] = useState("");
   const [saleOpensAt, setSaleOpensAt] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -23,13 +25,15 @@ export function CreateEventPage() {
         method: "POST",
         body: {
           name,
+          venue,
+          description: description.trim() === "" ? null : description,
           saleOpensAt: new Date(saleOpensAt).toISOString(),
         },
       });
       navigate("/admin");
     } catch (err) {
       if (err instanceof ApiError && err.status === 400) {
-        setError("Check the event name and sale date. Sale date must be in the future.");
+        setError("Check the event details — name, venue, and sale date (must be in the future) are required.");
       } else {
         setError("Something went wrong. Try again.");
       }
@@ -55,6 +59,28 @@ export function CreateEventPage() {
               required
               autoFocus
               className="mt-1.5 w-full rounded border border-border bg-bg px-3 py-2 text-ink outline-none focus:border-accent"
+            />
+          </label>
+
+          <label className="mt-4 block text-sm text-muted">
+            Venue
+            <input
+              type="text"
+              value={venue}
+              onChange={(e) => setVenue(e.target.value)}
+              required
+              placeholder="e.g. Madison Square Garden"
+              className="mt-1.5 w-full rounded border border-border bg-bg px-3 py-2 text-ink outline-none focus:border-accent"
+            />
+          </label>
+
+          <label className="mt-4 block text-sm text-muted">
+            Description <span className="text-muted/60">(optional)</span>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={3}
+              className="mt-1.5 w-full resize-none rounded border border-border bg-bg px-3 py-2 text-ink outline-none focus:border-accent"
             />
           </label>
 
