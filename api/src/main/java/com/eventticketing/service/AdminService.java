@@ -28,6 +28,12 @@ public class AdminService {
         return EventResponse.from(saved);
     }
 
+    public EventResponse getEvent(UUID eventId) {
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Event not found"));
+        return EventResponse.from(event);
+    }
+
     public Page<EventResponse> listEvents(Pageable pageable) {
         return eventRepository.findAll(pageable)
                 .map(EventResponse::from);

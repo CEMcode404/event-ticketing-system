@@ -35,6 +35,11 @@ public class AdminController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<EventResponse> getEvent(@PathVariable UUID id) {
+        return ResponseEntity.ok(adminService.getEvent(id));
+    }
+
     @GetMapping
     public ResponseEntity<Page<EventResponse>> listEvents(Pageable pageable) {
         return ResponseEntity.ok(adminService.listEvents(pageable));
