@@ -76,7 +76,11 @@ export function DashboardPage() {
         {!loading && !error && events.length > 0 && (
           <ul className="mt-8 max-w-2xl divide-y divide-border rounded border border-border">
             {events.map((event) => (
-              <li key={event.id} className="flex items-center justify-between px-5 py-4">
+              <li
+                key={event.id}
+                onClick={() => navigate(`/admin/events/${event.id}`)}
+                className="flex cursor-pointer items-center justify-between px-5 py-4 hover:bg-bg-panel"
+              >
                 <div>
                   <span className="font-medium">{event.name}</span>
                   <p className="mt-0.5 text-sm text-muted">{event.venue}</p>

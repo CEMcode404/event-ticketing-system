@@ -3,6 +3,7 @@ package com.eventticketing.service;
 import com.eventticketing.dto.BulkGenerateSeatsRequest;
 import com.eventticketing.dto.HoldSeatResponse;
 import com.eventticketing.dto.SeatResponse;
+import com.eventticketing.dto.SeatSummaryResponse;
 import com.eventticketing.entity.Seat;
 import com.eventticketing.repository.EventRepository;
 import com.eventticketing.repository.SeatRepository;
@@ -13,7 +14,9 @@ import org.springframework.web.server.ResponseStatusException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -21,9 +24,7 @@ import java.util.UUID;
 public class SeatService {
 
     private static final int MAX_SEATS_PER_CALL = 10_000;
-
     private static final Duration INITIAL_HOLD_TTL = Duration.ofMinutes(10);
-
     private static final int BROWSE_LIMIT = 500;
 
     private final SeatRepository seatRepository;
@@ -59,6 +60,22 @@ public class SeatService {
         List<Seat> saved = seatRepository.saveAll(seats);
 
         return saved.stream().map(SeatResponse::from).toList();
+    }
+
+    public List<SeatSummaryResponse> summary(UUID eventId) {
+        List<Seat> seats = seatRepository.findAllByEvent(eventId);
+
+        Map<String, List<Seat>> bySection = new LinkedHashMap<>();
+        for (Seat seat : seats) {
+            bySection.computeIfAbsent(seat.getSection(), s -> new ArrayList<>()).add(seat);
+        }
+
+        List<SeatSummaryResponse> result = new ArrayList<>();
+        for (Map.Entry<String, List<Seat>> entry : bySection.entrySet()) {
+            Integer priceCents = entry.getValue().get(0).getPriceCents();
+            result.add(new SeatSummaryResponse(entry.getKey(), entry.getValue().size(), priceCents));
+        }
+        return result;
     }
 
     public List<SeatResponse> browse(UUID eventId) {

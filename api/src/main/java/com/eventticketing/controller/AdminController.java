@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -38,6 +39,14 @@ public class AdminController {
     @GetMapping("/{id}")
     public ResponseEntity<EventResponse> getEvent(@PathVariable UUID id) {
         return ResponseEntity.ok(adminService.getEvent(id));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<EventResponse> updateEvent(
+            @PathVariable UUID id,
+            @Valid @RequestBody CreateEventRequest request
+    ) {
+        return ResponseEntity.ok(adminService.updateEvent(id, request));
     }
 
     @GetMapping

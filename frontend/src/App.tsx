@@ -4,6 +4,7 @@ import { HomePage } from "./pages/HomePage";
 import { LoginPage } from "./pages/LoginPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { CreateEventPage } from "./pages/CreateEventPage";
+import { EventDetailPage } from "./pages/EventDetailPage";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 
 function App() {
@@ -41,6 +42,14 @@ function App() {
           element={
             <ProtectedRoute>
               <CreateEventPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/events/:id"
+          element={
+            <ProtectedRoute>
+              <EventDetailPage />
             </ProtectedRoute>
           }
         />

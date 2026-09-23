@@ -80,6 +80,16 @@ public class SeatRepository {
         return Optional.ofNullable(seat);
     }
 
+    public List<Seat> findAllByEvent(UUID eventId) {
+        return table.index(GSI_NAME)
+                .query(QueryConditional.keyEqualTo(Key.builder()
+                        .partitionValue(eventId.toString())
+                        .build()))
+                .stream()
+                .flatMap(page -> page.items().stream())
+                .collect(Collectors.toList());
+    }
+
     public List<Seat> findAvailableByEvent(UUID eventId, int limit) {
         return table.index(GSI_NAME)
                 .query(QueryConditional.keyEqualTo(Key.builder()
