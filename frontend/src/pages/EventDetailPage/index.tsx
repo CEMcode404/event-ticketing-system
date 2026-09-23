@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuthedFetch } from "../../hooks/useAuthedFetch";
 import { Navbar } from "../../components/Navbar";
@@ -28,11 +28,11 @@ export function EventDetailPage() {
   const [statusError, setStatusError] = useState<string | null>(null);
   const [updatingStatus, setUpdatingStatus] = useState(false);
 
-  function loadSummary() {
+    const loadSummary = useCallback(() => {
     authedFetch<SeatSummary[]>(`/api/admin/seats/summary?eventId=${id}`)
       .then(setSeatSummary)
       .catch(() => {});
-  }
+  }, [authedFetch, id]);
 
   useEffect(() => {
     authedFetch<EventResponse>(`/api/admin/events/${id}`)
@@ -41,7 +41,7 @@ export function EventDetailPage() {
       .finally(() => setLoading(false));
 
     loadSummary();
-  }, [id]);
+  }, [id, authedFetch, loadSummary]);
 
   async function changeStatus(newStatus: EventStatus) {
     setStatusError(null);
@@ -111,9 +111,16 @@ export function EventDetailPage() {
         <SeatsPanel summary={seatSummary} onAddSection={() => setAddSectionOpen(true)} />
       </div>
 
-      <EditEventModal open={editOpen} onClose={() => setEditOpen(false)} event={event} onSaved={setEvent} />
+      <EditEventModal         
+        key={editOpen ? "edit-open" : "edit-closed"}
+        open={editOpen} 
+        onClose={() => setEditOpen(false)} 
+        event={event} 
+        onSaved={setEvent} 
+      />
 
       <AddSectionModal
+        key={addSectionOpen ? "add-open" : "add-closed"}
         open={addSectionOpen}
         onClose={() => setAddSectionOpen(false)}
         eventId={event.id}

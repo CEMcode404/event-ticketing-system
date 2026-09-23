@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Modal } from "../../../components/Modal";
 import { Button } from "../../../components/Button";
 import { TextField } from "../../../components/fields/TextField";
@@ -26,15 +26,6 @@ export function EditEventModal({ open, onClose, event, onSaved }: EditEventModal
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    if (open) {
-      setName(event.name);
-      setVenue(event.venue);
-      setDescription(event.description ?? "");
-      setSaleOpensAt(toDatetimeLocal(event.saleOpensAt));
-      setError(null);
-    }
-  }, [open, event]);
 
   async function handleSave(e: React.SubmitEvent) {
     e.preventDefault();

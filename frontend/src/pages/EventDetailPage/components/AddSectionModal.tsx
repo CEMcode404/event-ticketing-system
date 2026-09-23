@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Modal } from "../../../components/Modal";
 import { Button } from "../../../components/Button";
 import { TextField } from "../../../components/fields/TextField";
@@ -22,16 +22,6 @@ export function AddSectionModal({ open, onClose, eventId, onGenerated }: AddSect
   const [price, setPrice] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
-
-  useEffect(() => {
-    if (open) {
-      setSection("");
-      setRowCount("");
-      setSeatsPerRow("");
-      setPrice("");
-      setError(null);
-    }
-  }, [open]);
 
   async function handleGenerate(e: React.SubmitEvent) {
     e.preventDefault();

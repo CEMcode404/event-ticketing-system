@@ -24,7 +24,7 @@ export function DashboardPage() {
       .then((page) => setEvents(page.content))
       .catch(() => setError("Couldn't load events."))
       .finally(() => setLoading(false));
-  }, []);
+  }, [authedFetch]);
 
   return (
     <div className="min-h-svh bg-bg">
