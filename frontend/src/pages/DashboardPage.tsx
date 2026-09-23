@@ -2,39 +2,14 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthedFetch } from "../hooks/useAuthedFetch";
 import { Navbar } from "../components/Navbar";
-
-type EventStatus = "DRAFT" | "PUBLISHED" | "SUSPENDED" | "CANCELLED";
-
-interface EventResponse {
-  id: string;
-  name: string;
-  venue: string;
-  description: string | null;
-  saleOpensAt: string;
-  status: EventStatus;
-  createdAt: string;
-}
+import type { EventResponse } from "../types";
+import { STATUS_COLOR } from "../types";
+import { formatDateTime } from "../lib/util";
 
 interface Page<T> {
   content: T[];
   totalElements: number;
 }
-
-function formatDateTime(iso: string): string {
-  return new Date(iso).toLocaleString(undefined, {
-    dateStyle: "medium",
-    timeStyle: "short",
-  });
-}
-
-// Status text color only, for now — actions (publish/suspend/cancel
-// buttons) are a separate follow-up, not built yet.
-const STATUS_COLOR: Record<EventStatus, string> = {
-  DRAFT: "text-muted",
-  PUBLISHED: "text-accent",
-  SUSPENDED: "text-urgent",
-  CANCELLED: "text-urgent",
-};
 
 export function DashboardPage() {
   const authedFetch = useAuthedFetch();
