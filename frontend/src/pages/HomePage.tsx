@@ -1,22 +1,22 @@
+import { useEffect, useState } from "react";
 import { Navbar } from "../components/Navbar";
 import { Footer } from "../components/Footer";
 import { EventCard, type EventSummary } from "../components/EventCard";
-
-// Placeholder data — GET /api/events (public, unguarded) doesn't exist yet.
-// Shape matches the real Event entity (id, name, saleOpensAt) so swapping
-// this for a real fetch later is a drop-in change, not a rewrite.
-const MOCK_EVENTS: EventSummary[] = [
-  { id: "1", name: "Northbound — Fall Tour", saleOpensAt: "2026-10-14T18:00:00Z" },
-  { id: "2", name: "The Salt Line", saleOpensAt: "2026-10-21T18:00:00Z" },
-  { id: "3", name: "Hollow Coast", saleOpensAt: "2026-11-02T18:00:00Z" },
-  { id: "4", name: "Radio Static Live", saleOpensAt: "2026-11-09T18:00:00Z" },
-];
-
-const sortedEvents = [...MOCK_EVENTS].sort(
-  (a, b) => new Date(a.saleOpensAt).getTime() - new Date(b.saleOpensAt).getTime(),
-);
+import { apiFetch } from "../lib/api";
+import type { Page } from "../types";
 
 export function HomePage() {
+  const [events, setEvents] = useState<EventSummary[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    apiFetch<Page<EventSummary>>("/api/events")
+      .then((page) => setEvents(page.content))
+      .catch(() => setError("Couldn't load events."))
+      .finally(() => setLoading(false));
+  }, []);
+
   return (
     <div className="flex min-h-svh flex-col">
       <Navbar />
@@ -46,11 +46,20 @@ export function HomePage() {
       <section id="events" className="mx-auto w-full max-w-6xl flex-1 px-6 pb-24">
         <h2 className="font-display text-4xl font-bold">Upcoming</h2>
         <p className="mt-2 mb-8 text-muted">Catch these before the queue opens.</p>
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-5">
-          {sortedEvents.map((event) => (
-            <EventCard key={event.id} event={event} />
-          ))}
-        </div>
+
+        {loading && <p className="text-muted">Loading…</p>}
+        {error && <p className="text-urgent">{error}</p>}
+        {!loading && !error && events.length === 0 && (
+          <p className="text-muted">No upcoming events yet.</p>
+        )}
+
+        {!loading && !error && events.length > 0 && (
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-5">
+            {events.map((event) => (
+              <EventCard key={event.id} event={event} />
+            ))}
+          </div>
+        )}
       </section>
 
       <Footer />

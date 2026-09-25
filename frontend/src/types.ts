@@ -15,3 +15,8 @@ export const STATUS_COLOR: Record<EventStatus, string> = {
   SUSPENDED: "text-urgent",
   CANCELLED: "text-urgent",
 };
+
+export interface Page<T> {
+  content: T[];
+  totalElements: number;
+}

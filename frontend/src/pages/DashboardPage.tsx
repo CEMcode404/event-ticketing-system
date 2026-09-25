@@ -2,14 +2,9 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthedFetch } from "../hooks/useAuthedFetch";
 import { Navbar } from "../components/Navbar";
-import type { EventResponse } from "../types";
+import type { EventResponse, Page } from "../types";
 import { STATUS_COLOR } from "../types";
 import { formatDateTime } from "../lib/util";
-
-interface Page<T> {
-  content: T[];
-  totalElements: number;
-}
 
 export function DashboardPage() {
   const authedFetch = useAuthedFetch();
