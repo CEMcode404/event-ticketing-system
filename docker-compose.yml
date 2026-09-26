@@ -34,6 +34,7 @@ services:
     image: amazon/dynamodb-local:latest
     container_name: waitroom-dynamodb
     restart: unless-stopped
+    user: root
     command: "-jar DynamoDBLocal.jar -dbPath /home/dynamodblocal/data -sharedDb"
     ports:
       - "8000:8000"
