@@ -10,6 +10,10 @@
   --color-urgent: #ef4a63;
   --color-border: #322a47;
 
+  --color-card: #1f1c30;
+  --color-card-border: #2f2a45;
+  --color-card-hover: #262238;
+
   --font-display: "Big Shoulders Display", sans-serif;
   --font-body: "Work Sans", system-ui, sans-serif;
 }
