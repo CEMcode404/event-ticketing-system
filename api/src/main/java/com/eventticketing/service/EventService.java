@@ -1,5 +1,6 @@
 package com.eventticketing.service;
 
+import com.eventticketing.dto.PublicEventResponse;
 import com.eventticketing.entity.Event;
 import com.eventticketing.dto.CreateEventRequest;
 import com.eventticketing.dto.EventResponse;
@@ -9,16 +10,17 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.UUID;
 
 @Service
-public class AdminService {
+public class EventService {
 
     private final EventRepository eventRepository;
 
-    public AdminService(EventRepository eventRepository) {
+    public EventService(EventRepository eventRepository) {
         this.eventRepository = eventRepository;
     }
 
@@ -52,6 +54,7 @@ public class AdminService {
                 .map(EventResponse::from);
     }
 
+    @Transactional(readOnly = true)
     public EventResponse updateStatus(UUID eventId, EventStatus newStatus) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Event not found"));
@@ -63,5 +66,19 @@ public class AdminService {
         event.setStatus(newStatus);
         Event saved = eventRepository.save(event);
         return EventResponse.from(saved);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<PublicEventResponse> listPublished(Pageable pageable) {
+        return eventRepository.findByStatus(EventStatus.PUBLISHED, pageable)
+                .map(PublicEventResponse::from);
+    }
+
+    @Transactional(readOnly = true)
+    public PublicEventResponse getPublished(UUID id) {
+        return eventRepository.findById(id)
+                .filter(event -> event.getStatus() == EventStatus.PUBLISHED)
+                .map(PublicEventResponse::from)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Event not found"));
     }
 }

@@ -3,7 +3,7 @@ package com.eventticketing.controller;
 import com.eventticketing.dto.CreateEventRequest;
 import com.eventticketing.dto.EventResponse;
 import com.eventticketing.dto.UpdateEventStatusRequest;
-import com.eventticketing.service.AdminService;
+import com.eventticketing.service.EventService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -24,21 +24,21 @@ import java.util.UUID;
 @RequestMapping("/api/admin/events")
 public class AdminController {
 
-    private final AdminService adminService;
+    private final EventService eventService;
 
-    public AdminController(AdminService adminService) {
-        this.adminService = adminService;
+    public AdminController(EventService eventService) {
+        this.eventService = eventService;
     }
 
     @PostMapping
     public ResponseEntity<EventResponse> createEvent(@Valid @RequestBody CreateEventRequest request) {
-        EventResponse response = adminService.createEvent(request);
+        EventResponse response = eventService.createEvent(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<EventResponse> getEvent(@PathVariable UUID id) {
-        return ResponseEntity.ok(adminService.getEvent(id));
+        return ResponseEntity.ok(eventService.getEvent(id));
     }
 
     @PutMapping("/{id}")
@@ -46,12 +46,12 @@ public class AdminController {
             @PathVariable UUID id,
             @Valid @RequestBody CreateEventRequest request
     ) {
-        return ResponseEntity.ok(adminService.updateEvent(id, request));
+        return ResponseEntity.ok(eventService.updateEvent(id, request));
     }
 
     @GetMapping
     public ResponseEntity<Page<EventResponse>> listEvents(Pageable pageable) {
-        return ResponseEntity.ok(adminService.listEvents(pageable));
+        return ResponseEntity.ok(eventService.listEvents(pageable));
     }
 
     @PatchMapping("/{id}/status")
@@ -59,6 +59,6 @@ public class AdminController {
             @PathVariable UUID id,
             @Valid @RequestBody UpdateEventStatusRequest request
     ) {
-        return ResponseEntity.ok(adminService.updateStatus(id, request.status()));
+        return ResponseEntity.ok(eventService.updateStatus(id, request.status()));
     }
 }
