@@ -37,7 +37,7 @@
                 @Value("${waitingroom.admit-batch-size:50}") int admitBatchSize,
                 @Value("${waitingroom.heartbeat-timeout-seconds:30}") long heartbeatTimeoutSeconds,
                 @Value("${waitingroom.admission-ttl-minutes:10}") long admissionTtlMinutes,
-                @Value("${waitingroom.max-active-shoppers:500}") int maxActiveShoppers,
+                @Value("${waitingroom.max-active-shoppers:500}") int maxActiveShoppers
         ) {
             this.redis = redis;
             this.eventRepository = eventRepository;
