@@ -6,6 +6,8 @@ import { DashboardPage } from "./pages/DashboardPage";
 import { CreateEventPage } from "./pages/CreateEventPage";
 import { EventDetailPage } from "./pages/EventDetailPage";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { QueuePage } from "./pages/QueuePage";
+import { ShopPage } from "./pages/ShopPage";
 
 function App() {
   const navigate = useNavigate();
@@ -29,6 +31,8 @@ function App() {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/admin/login" element={<LoginPage />} />
+        <Route path="/events/:id/queue" element={<QueuePage />} />
+        <Route path="/events/:id/shop" element={<ShopPage />} />
         <Route
           path="/admin"
           element={

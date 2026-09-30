@@ -10,16 +10,18 @@ export class ApiError extends Error {
 }
 
 interface RequestOptions {
-  method?: "GET" | "POST" | "PUT" | "DELETE";
+  method?: "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
   body?: unknown;
   token?: string | null;
+  headers?: Record<string, string>;
 }
 
 export async function apiFetch<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const { method = "GET", body, token } = options;
+  const { method = "GET", body, token, headers: extraHeaders } = options;
 
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
+    ...extraHeaders,
   };
 
   if (token) {
