@@ -12,6 +12,7 @@ import java.util.UUID;
 public class Seat {
 
     private String id;
+    private String eventSection; // "eventId#section": partition key of EventSectionIndex
     private String eventId;
     private String section;
     private String rowLabel;
@@ -31,12 +32,17 @@ public class Seat {
         Seat seat = new Seat();
         seat.id = UUID.randomUUID().toString();
         seat.eventId = eventId.toString();
+        seat.eventSection = eventSectionKey(eventId, section);
         seat.section = section;
         seat.rowLabel = rowLabel;
         seat.seatNumber = seatNumber;
         seat.priceCents = priceCents;
         seat.status = SeatStatus.AVAILABLE.name();
         return seat;
+    }
+
+    public static String eventSectionKey(UUID eventId, String section) {
+        return eventId + "#" + section;
     }
 
     @DynamoDbPartitionKey
@@ -55,6 +61,15 @@ public class Seat {
 
     public void setEventId(String eventId) {
         this.eventId = eventId;
+    }
+
+    @DynamoDbSecondaryPartitionKey(indexNames = "EventSectionIndex")
+    public String getEventSection() {
+        return eventSection;
+    }
+
+    public void setEventSection(String eventSection) {
+        this.eventSection = eventSection;
     }
 
     public String getSection() {
@@ -89,7 +104,7 @@ public class Seat {
         this.priceCents = priceCents;
     }
 
-    @DynamoDbSecondarySortKey(indexNames = "EventStatusIndex")
+    @DynamoDbSecondarySortKey(indexNames = {"EventStatusIndex", "EventSectionIndex"})
     public String getStatus() {
         return status;
     }

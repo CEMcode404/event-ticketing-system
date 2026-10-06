@@ -40,6 +40,7 @@ public class SeatRepository {
 
     private static final String TABLE_NAME = "Seats";
     private static final String GSI_NAME = "EventStatusIndex";
+    private static final String SECTION_GSI_NAME = "EventSectionIndex";
 
     private static final int BATCH_SIZE = 25;       // DynamoDB's BatchWriteItem limit
     private static final int MAX_BATCH_RETRIES = 5;
@@ -58,19 +59,24 @@ public class SeatRepository {
     void ensureTableExists() {
         try {
             table.createTable(CreateTableEnhancedRequest.builder()
-                    .globalSecondaryIndices(EnhancedGlobalSecondaryIndex.builder()
-                            .indexName(GSI_NAME)
-                            .projection(Projection.builder().projectionType(ProjectionType.ALL).build())
-                            .provisionedThroughput(ProvisionedThroughput.builder()
-                                    .readCapacityUnits(5L)
-                                    .writeCapacityUnits(5L)
-                                    .build())
-                            .build())
+                    .globalSecondaryIndices(gsi(GSI_NAME), gsi(SECTION_GSI_NAME))
                     .build());
         } catch (ResourceInUseException alreadyExists) {
+            // table already exists
         } catch (Exception e) {
             log.error("Could not create/verify the Seats DynamoDB table at startup", e);
         }
+    }
+
+    private static EnhancedGlobalSecondaryIndex gsi(String indexName) {
+        return EnhancedGlobalSecondaryIndex.builder()
+                .indexName(indexName)
+                .projection(Projection.builder().projectionType(ProjectionType.ALL).build())
+                .provisionedThroughput(ProvisionedThroughput.builder()
+                        .readCapacityUnits(5L)
+                        .writeCapacityUnits(5L)
+                        .build())
+                .build();
     }
 
     public void save(Seat seat) {
