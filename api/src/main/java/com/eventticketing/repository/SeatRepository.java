@@ -13,12 +13,14 @@ import software.amazon.awssdk.enhanced.dynamodb.model.CreateTableEnhancedRequest
 import software.amazon.awssdk.enhanced.dynamodb.model.EnhancedGlobalSecondaryIndex;
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
 import software.amazon.awssdk.enhanced.dynamodb.model.UpdateItemEnhancedRequest;
+import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 import software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException;
 import software.amazon.awssdk.services.dynamodb.model.Projection;
 import software.amazon.awssdk.services.dynamodb.model.ProjectionType;
 import software.amazon.awssdk.services.dynamodb.model.ProvisionedThroughput;
 import software.amazon.awssdk.services.dynamodb.model.ResourceInUseException;
+import software.amazon.awssdk.services.dynamodb.model.UpdateItemRequest;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -38,9 +40,11 @@ public class SeatRepository {
     private static final String GSI_NAME = "EventStatusIndex";
 
     private final DynamoDbTable<Seat> table;
+    private final DynamoDbClient dynamoDbClient;
 
-    public SeatRepository(DynamoDbEnhancedClient enhancedClient) {
+    public SeatRepository(DynamoDbEnhancedClient enhancedClient, DynamoDbClient dynamoDbClient) {
         this.table = enhancedClient.table(TABLE_NAME, TableSchema.fromBean(Seat.class));
+        this.dynamoDbClient = dynamoDbClient;
     }
 
     @PostConstruct
@@ -131,14 +135,17 @@ public class SeatRepository {
         }
     }
 
-    public void releaseHold(String seatId) {
-        Seat seat = new Seat();
-        seat.setId(seatId);
-        seat.setHeldUntil(null);
-        seat.setHoldToken(null);
-        table.updateItem(UpdateItemEnhancedRequest.builder(Seat.class)
-                .item(seat)
-                .ignoreNulls(false)
-                .build());
+    public void releaseHold(String seatId, String holdToken) {
+        try {
+            dynamoDbClient.updateItem(UpdateItemRequest.builder()
+                    .tableName(TABLE_NAME)
+                    .key(Map.of("id", AttributeValue.fromS(seatId)))
+                    .updateExpression("REMOVE heldUntil, holdToken")
+                    .conditionExpression("holdToken = :token")
+                    .expressionAttributeValues(Map.of(":token", AttributeValue.fromS(holdToken)))
+                    .build());
+        } catch (ConditionalCheckFailedException notOurHold) {
+            // already released, or now held by someone else: nothing to do
+        }
     }
 }
