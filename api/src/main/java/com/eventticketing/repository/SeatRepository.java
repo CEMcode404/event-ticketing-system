@@ -21,6 +21,8 @@ import software.amazon.awssdk.services.dynamodb.model.ProjectionType;
 import software.amazon.awssdk.services.dynamodb.model.ProvisionedThroughput;
 import software.amazon.awssdk.services.dynamodb.model.ResourceInUseException;
 import software.amazon.awssdk.services.dynamodb.model.UpdateItemRequest;
+import software.amazon.awssdk.enhanced.dynamodb.model.BatchWriteResult;
+import software.amazon.awssdk.enhanced.dynamodb.model.WriteBatch;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -39,10 +41,15 @@ public class SeatRepository {
     private static final String TABLE_NAME = "Seats";
     private static final String GSI_NAME = "EventStatusIndex";
 
+    private static final int BATCH_SIZE = 25;       // DynamoDB's BatchWriteItem limit
+    private static final int MAX_BATCH_RETRIES = 5;
+
+    private final DynamoDbEnhancedClient enhancedClient;
     private final DynamoDbTable<Seat> table;
     private final DynamoDbClient dynamoDbClient;
 
     public SeatRepository(DynamoDbEnhancedClient enhancedClient, DynamoDbClient dynamoDbClient) {
+        this.enhancedClient = enhancedClient;
         this.table = enhancedClient.table(TABLE_NAME, TableSchema.fromBean(Seat.class));
         this.dynamoDbClient = dynamoDbClient;
     }
@@ -71,10 +78,26 @@ public class SeatRepository {
     }
 
     public List<Seat> saveAll(List<Seat> seats) {
-        int batchSize = 25;
-        for (int i = 0; i < seats.size(); i += batchSize) {
-            List<Seat> batch = seats.subList(i, Math.min(i + batchSize, seats.size()));
-            batch.forEach(table::putItem);
+        for (int i = 0; i < seats.size(); i += BATCH_SIZE) {
+            List<Seat> pending = seats.subList(i, Math.min(i + BATCH_SIZE, seats.size()));
+            int attempt = 0;
+
+            while (!pending.isEmpty()) {
+                if (attempt > MAX_BATCH_RETRIES) {
+                    throw new IllegalStateException(pending.size() + " seats could not be written after retries");
+                }
+                if (attempt > 0) {
+                    sleepQuietly(50L << attempt); // 100ms, 200ms, 400ms, 800ms, 1.6s
+                }
+
+                WriteBatch.Builder<Seat> builder = WriteBatch.builder(Seat.class).mappedTableResource(table);
+                pending.forEach(builder::addPutItem);
+                WriteBatch batch = builder.build();
+
+                BatchWriteResult result = enhancedClient.batchWriteItem(r -> r.addWriteBatch(batch));
+                pending = result.unprocessedPutItemsForTable(table);
+                attempt++;
+            }
         }
         return seats;
     }
@@ -146,6 +169,15 @@ public class SeatRepository {
                     .build());
         } catch (ConditionalCheckFailedException notOurHold) {
             // already released, or now held by someone else: nothing to do
+        }
+    }
+
+    private static void sleepQuietly(long millis) {
+        try {
+            Thread.sleep(millis);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Interrupted while retrying batch write", e);
         }
     }
 }
