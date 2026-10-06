@@ -86,7 +86,7 @@ public class SeatService {
 
     public HoldSeatResponse hold(UUID seatId) {
         String holdToken = UUID.randomUUID().toString();
-        boolean acquired = seatRepository.tryAcquireHold(seatId.toString(), holdToken, INITIAL_HOLD_TTL);
+        boolean acquired = seatRepository.tryHoldBlock(List.of(seatId.toString()), holdToken, INITIAL_HOLD_TTL);
 
         if (!acquired) {
             Optional<Seat> seat = seatRepository.findById(seatId.toString());

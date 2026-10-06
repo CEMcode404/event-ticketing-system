@@ -12,7 +12,6 @@ import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
 import software.amazon.awssdk.enhanced.dynamodb.model.CreateTableEnhancedRequest;
 import software.amazon.awssdk.enhanced.dynamodb.model.EnhancedGlobalSecondaryIndex;
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
-import software.amazon.awssdk.enhanced.dynamodb.model.UpdateItemEnhancedRequest;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 import software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException;
@@ -23,10 +22,12 @@ import software.amazon.awssdk.services.dynamodb.model.ResourceInUseException;
 import software.amazon.awssdk.services.dynamodb.model.UpdateItemRequest;
 import software.amazon.awssdk.enhanced.dynamodb.model.BatchWriteResult;
 import software.amazon.awssdk.enhanced.dynamodb.model.WriteBatch;
+import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest;
+import software.amazon.awssdk.enhanced.dynamodb.model.TransactUpdateItemEnhancedRequest;
+import software.amazon.awssdk.services.dynamodb.model.TransactionCanceledException;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -135,33 +136,40 @@ public class SeatRepository {
                 .collect(Collectors.toList());
     }
 
-    public boolean tryAcquireHold(String seatId, String holdToken, Duration ttl) {
+    public boolean tryHoldBlock(List<String> seatIds, String holdToken, Duration ttl) {
         Instant now = Instant.now();
-        Seat seat = new Seat();
-        seat.setId(seatId);
-        seat.setHeldUntil(now.plus(ttl).toString());
-        seat.setHoldToken(holdToken);
-
-        Map<String, AttributeValue> expressionValues = new HashMap<>();
-        expressionValues.put(":now", AttributeValue.builder().s(now.toString()).build());
-        expressionValues.put(":available", AttributeValue.builder().s(SeatStatus.AVAILABLE.name()).build());
-
-        Expression condition = Expression.builder()
-                .expression("#status = :available AND (attribute_not_exists(heldUntil) OR heldUntil < :now)")
-                .expressionNames(Map.of("#status", "status"))
-                .expressionValues(expressionValues)
-                .build();
+        String heldUntil = now.plus(ttl).toString();
+        Expression condition = holdableCondition(now);
 
         try {
-            table.updateItem(UpdateItemEnhancedRequest.builder(Seat.class)
-                    .item(seat)
-                    .ignoreNulls(true)
-                    .conditionExpression(condition)
-                    .build());
+            enhancedClient.transactWriteItems(r -> {
+                for (String seatId : seatIds) {
+                    Seat seat = new Seat();
+                    seat.setId(seatId);
+                    seat.setHeldUntil(heldUntil);
+                    seat.setHoldToken(holdToken);
+
+                    r.addUpdateItem(table, TransactUpdateItemEnhancedRequest.builder(Seat.class)
+                            .item(seat)
+                            .ignoreNulls(true)
+                            .conditionExpression(condition)
+                            .build());
+                }
+            });
             return true;
-        } catch (ConditionalCheckFailedException seatUnavailable) {
+        } catch (TransactionCanceledException conflict) {
             return false;
         }
+    }
+
+    private static Expression holdableCondition(Instant now) {
+        return Expression.builder()
+                .expression("#status = :available AND (attribute_not_exists(heldUntil) OR heldUntil < :now)")
+                .expressionNames(Map.of("#status", "status"))
+                .expressionValues(Map.of(
+                        ":now", AttributeValue.fromS(now.toString()),
+                        ":available", AttributeValue.fromS(SeatStatus.AVAILABLE.name())))
+                .build();
     }
 
     public void releaseHold(String seatId, String holdToken) {
@@ -176,6 +184,26 @@ public class SeatRepository {
         } catch (ConditionalCheckFailedException notOurHold) {
             // already released, or now held by someone else: nothing to do
         }
+    }
+
+    public List<Seat> findAvailableInSection(UUID eventId, String section, int limit) {
+        Expression notHeld = Expression.builder()
+                .expression("attribute_not_exists(heldUntil) OR heldUntil < :now")
+                .expressionValues(Map.of(":now", AttributeValue.fromS(Instant.now().toString())))
+                .build();
+
+        return table.index(SECTION_GSI_NAME)
+                .query(QueryEnhancedRequest.builder()
+                        .queryConditional(QueryConditional.keyEqualTo(Key.builder()
+                                .partitionValue(Seat.eventSectionKey(eventId, section))
+                                .sortValue(SeatStatus.AVAILABLE.name())
+                                .build()))
+                        .filterExpression(notHeld)
+                        .build())
+                .stream()
+                .flatMap(page -> page.items().stream())
+                .limit(limit)
+                .toList();
     }
 
     private static void sleepQuietly(long millis) {
