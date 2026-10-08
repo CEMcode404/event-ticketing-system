@@ -124,18 +124,6 @@ public class SeatRepository {
                 .collect(Collectors.toList());
     }
 
-    public List<Seat> findAvailableByEvent(UUID eventId, int limit) {
-        return table.index(GSI_NAME)
-                .query(QueryConditional.keyEqualTo(Key.builder()
-                        .partitionValue(eventId.toString())
-                        .sortValue(SeatStatus.AVAILABLE.name())
-                        .build()))
-                .stream()
-                .flatMap(page -> page.items().stream())
-                .limit(limit)
-                .collect(Collectors.toList());
-    }
-
     public boolean tryHoldBlock(List<String> seatIds, String holdToken, Duration ttl) {
         Instant now = Instant.now();
         String heldUntil = now.plus(ttl).toString();

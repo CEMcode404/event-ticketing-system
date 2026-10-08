@@ -3,7 +3,6 @@ package com.eventticketing.service;
 import com.eventticketing.dto.BulkGenerateSeatsRequest;
 import com.eventticketing.dto.HoldRequest;
 import com.eventticketing.dto.HoldResponse;
-import com.eventticketing.dto.HoldSeatResponse;
 import com.eventticketing.dto.SeatResponse;
 import com.eventticketing.dto.SeatSummaryResponse;
 import com.eventticketing.dto.SectionAvailabilityResponse;
@@ -24,7 +23,6 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.TreeMap;
 import java.util.UUID;
 
@@ -32,9 +30,6 @@ import java.util.UUID;
 public class SeatService {
 
     private static final int MAX_SEATS_PER_CALL = 10_000;
-    private static final Duration INITIAL_HOLD_TTL = Duration.ofMinutes(10);
-    private static final int BROWSE_LIMIT = 500;
-
     private static final int MAX_SEATS_READ_PER_SECTION = 10_000;
     private static final int SECTION_READ_ROUNDS = 3;
     private static final int BLOCK_ATTEMPTS_PER_READ = 5;
@@ -205,26 +200,5 @@ public class SeatService {
         boolean available = SeatStatus.AVAILABLE.name().equals(seat.getStatus());
         boolean notHeld = seat.getHeldUntil() == null || Instant.parse(seat.getHeldUntil()).isBefore(now);
         return available && notHeld;
-    }
-
-    public List<SeatResponse> browse(UUID eventId) {
-        return seatRepository.findAvailableByEvent(eventId, BROWSE_LIMIT).stream()
-                .map(SeatResponse::from)
-                .toList();
-    }
-
-    public HoldSeatResponse hold(UUID seatId) {
-        String holdToken = UUID.randomUUID().toString();
-        boolean acquired = seatRepository.tryHoldBlock(List.of(seatId.toString()), holdToken, INITIAL_HOLD_TTL);
-
-        if (!acquired) {
-            Optional<Seat> seat = seatRepository.findById(seatId.toString());
-            if (seat.isEmpty()) {
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Seat not found");
-            }
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Seat is currently held or no longer available");
-        }
-
-        return new HoldSeatResponse(seatId, holdToken, Instant.now().plus(INITIAL_HOLD_TTL));
     }
 }
