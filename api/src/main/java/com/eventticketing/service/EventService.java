@@ -1,9 +1,9 @@
 package com.eventticketing.service;
 
-import com.eventticketing.dto.PublicEventResponse;
-import com.eventticketing.entity.Event;
 import com.eventticketing.dto.CreateEventRequest;
 import com.eventticketing.dto.EventResponse;
+import com.eventticketing.dto.PublicEventResponse;
+import com.eventticketing.entity.Event;
 import com.eventticketing.enums.EventStatus;
 import com.eventticketing.repository.EventRepository;
 import org.springframework.data.domain.Page;
@@ -24,15 +24,16 @@ public class EventService {
         this.eventRepository = eventRepository;
     }
 
+    @Transactional
     public EventResponse createEvent(CreateEventRequest request) {
         Event event = new Event(request.name(), request.venue(), request.description(), request.saleOpensAt());
         Event saved = eventRepository.save(event);
         return EventResponse.from(saved);
     }
 
+    @Transactional
     public EventResponse updateEvent(UUID eventId, CreateEventRequest request) {
-        Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Event not found"));
+        Event event = findEvent(eventId);
 
         event.setName(request.name());
         event.setVenue(request.venue());
@@ -43,21 +44,9 @@ public class EventService {
         return EventResponse.from(saved);
     }
 
-    public EventResponse getEvent(UUID eventId) {
-        Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Event not found"));
-        return EventResponse.from(event);
-    }
-
-    public Page<EventResponse> listEvents(Pageable pageable) {
-        return eventRepository.findAll(pageable)
-                .map(EventResponse::from);
-    }
-
-    @Transactional(readOnly = true)
+    @Transactional
     public EventResponse updateStatus(UUID eventId, EventStatus newStatus) {
-        Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Event not found"));
+        Event event = findEvent(eventId);
 
         if (event.getStatus() == EventStatus.CANCELLED) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cancelled events cannot change status");
@@ -66,6 +55,17 @@ public class EventService {
         event.setStatus(newStatus);
         Event saved = eventRepository.save(event);
         return EventResponse.from(saved);
+    }
+
+    @Transactional(readOnly = true)
+    public EventResponse getEvent(UUID eventId) {
+        return EventResponse.from(findEvent(eventId));
+    }
+
+    @Transactional(readOnly = true)
+    public Page<EventResponse> listEvents(Pageable pageable) {
+        return eventRepository.findAll(pageable)
+                .map(EventResponse::from);
     }
 
     @Transactional(readOnly = true)
@@ -79,6 +79,11 @@ public class EventService {
         return eventRepository.findById(id)
                 .filter(event -> event.getStatus() == EventStatus.PUBLISHED)
                 .map(PublicEventResponse::from)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Event not found"));
+    }
+
+    private Event findEvent(UUID eventId) {
+        return eventRepository.findById(eventId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Event not found"));
     }
 }
