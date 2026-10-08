@@ -38,3 +38,5 @@ frontend/build/
 *.pem
 *.env
 .env.*
+
+application-local.properties

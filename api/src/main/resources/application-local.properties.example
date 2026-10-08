@@ -1,0 +1,37 @@
+# Local development config.
+# Copy this file to application-local.properties (git-ignored) and fill in your own values.
+# Activated with --spring.profiles.active=local (or SPRING_PROFILES_ACTIVE=local).
+
+# Redis (docker-compose)
+spring.data.redis.host=localhost
+spring.data.redis.port=6379
+
+# MySQL (docker-compose) - these credentials only unlock the local container
+spring.datasource.url=jdbc:mysql://localhost:3306/waitingroom
+spring.datasource.username=app_admin
+spring.datasource.password=changeme
+
+# Local dev only: auto-creates/updates tables from @Entity classes.
+# Prod uses ddl-auto=validate, so schema changes there go through migrations.
+spring.jpa.hibernate.ddl-auto=update
+
+admin.username=admin
+admin.password=changeme
+
+# Auth0 - your tenant domain and API identifier from the Auth0 dashboard
+spring.security.oauth2.resourceserver.jwt.issuer-uri=https://your-tenant.us.auth0.com/
+auth0.audience=https://event-ticketing-api
+
+app.cors.allowed-origin=http://localhost:5173
+
+# DynamoDB Local (docker-compose) - dummy credentials are fine locally
+dynamodb.endpoint=http://127.0.0.1:8000
+dynamodb.region=us-east-1
+aws.access-key-id=dummy
+aws.secret-access-key=dummy
+
+# Stripe test mode - keys from the Stripe dashboard (Developers > API keys)
+# and the webhook secret printed by `stripe listen`
+stripe.secret-key=sk_test_your_key_here
+stripe.webhook-secret=whsec_your_secret_here
+app.frontend-url=http://localhost:5173
