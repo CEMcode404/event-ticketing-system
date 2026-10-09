@@ -116,6 +116,17 @@ public class WaitingRoomService {
         redis.delete(holdKey(eventId, admissionToken));
     }
 
+    public void completeShopping(UUID eventId, String admissionToken) {
+        String admission = redis.opsForValue().get(tokenKey(admissionToken));
+        if (admission != null) {
+            String sessionId = admission.substring(admission.indexOf(':') + 1);
+            redis.opsForZSet().remove(activeKey(eventId), sessionId);
+            redis.delete(admittedKey(eventId, sessionId));
+        }
+        redis.delete(tokenKey(admissionToken));
+        redis.delete(holdKey(eventId, admissionToken));
+    }
+
     public Set<UUID> activeEventIds() {
         Set<String> members = redis.opsForSet().members(ACTIVE_EVENTS);
         if (members == null) {

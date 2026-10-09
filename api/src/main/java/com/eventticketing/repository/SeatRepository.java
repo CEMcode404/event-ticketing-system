@@ -197,19 +197,20 @@ public class SeatRepository {
         }
     }
 
-    public boolean trySellBlock(List<String> seatIds, String holdToken) {
+    public boolean trySellBlock(List<String> seatIds, String holdToken, String orderId) {
         List<TransactWriteItem> sales = seatIds.stream()
                 .map(seatId -> TransactWriteItem.builder()
                         .update(Update.builder()
                                 .tableName(TABLE_NAME)
                                 .key(Map.of("id", AttributeValue.fromS(seatId)))
-                                .updateExpression("SET #status = :sold REMOVE heldUntil, holdToken")
+                                .updateExpression("SET #status = :sold, orderId = :orderId REMOVE heldUntil, holdToken")
                                 .conditionExpression("#status = :available AND holdToken = :token")
                                 .expressionAttributeNames(Map.of("#status", "status"))
                                 .expressionAttributeValues(Map.of(
                                         ":sold", AttributeValue.fromS(SeatStatus.SOLD.name()),
                                         ":available", AttributeValue.fromS(SeatStatus.AVAILABLE.name()),
-                                        ":token", AttributeValue.fromS(holdToken)))
+                                        ":token", AttributeValue.fromS(holdToken),
+                                        ":orderId", AttributeValue.fromS(orderId)))
                                 .build())
                         .build())
                 .toList();

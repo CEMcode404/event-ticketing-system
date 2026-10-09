@@ -23,6 +23,7 @@ public class Seat {
     private String heldUntil;
 
     private String holdToken;
+    private String orderId;
 
     public Seat() {
         // required by the DynamoDB Enhanced Client
@@ -128,4 +129,8 @@ public class Seat {
     public void setHoldToken(String holdToken) {
         this.holdToken = holdToken;
     }
+
+    public String getOrderId() { return orderId; }
+
+    public void setOrderId(String orderId) { this.orderId = orderId; }
 }

@@ -10,4 +10,8 @@ public interface PaymentGateway {
     CheckoutSession createCheckout(Order order, List<CheckoutLineItem> lineItems);
 
     Optional<String> openCheckoutUrl(String sessionId);
+
+    PaymentEvent parseWebhook(String payload, String signatureHeader);
+
+    void refund(String paymentReference);
 }
