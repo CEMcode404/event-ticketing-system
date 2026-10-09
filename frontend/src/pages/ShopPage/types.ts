@@ -3,3 +3,8 @@ export interface SectionAvailability {
   available: number;
   priceCents: number;
 }
+
+export interface CheckoutResponse {
+  orderId: string;
+  checkoutUrl: string;
+}

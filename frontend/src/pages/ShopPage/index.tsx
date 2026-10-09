@@ -60,7 +60,7 @@ export function ShopPage() {
               </div>
 
               {hold ? (
-                <HoldSummary hold={hold} />
+                <HoldSummary eventId={id} admissionToken={admission.token} hold={hold} />
               ) : (
                 <SectionPicker eventId={id} admissionToken={admission.token} onHeld={handleHeld} />
               )}

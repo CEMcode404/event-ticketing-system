@@ -40,3 +40,8 @@ export function loadHold(eventId: string): Hold | null {
   const raw = sessionStorage.getItem(holdKey(eventId));
   return raw ? (JSON.parse(raw) as Hold) : null;
 }
+
+export function clearShopping(eventId: string) {
+  sessionStorage.removeItem(admissionKey(eventId));
+  sessionStorage.removeItem(holdKey(eventId));
+}

@@ -8,6 +8,7 @@ import { EventDetailPage } from "./pages/EventDetailPage";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { QueuePage } from "./pages/QueuePage";
 import { ShopPage } from "./pages/ShopPage";
+import { OrderPage } from "./pages/OrderPage";
 
 function App() {
   const navigate = useNavigate();
@@ -33,6 +34,7 @@ function App() {
         <Route path="/admin/login" element={<LoginPage />} />
         <Route path="/events/:id/queue" element={<QueuePage />} />
         <Route path="/events/:id/shop" element={<ShopPage />} />
+        <Route path="/events/:id/orders/:orderId" element={<OrderPage />} />
         <Route
           path="/admin"
           element={

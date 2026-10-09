@@ -1,6 +1,9 @@
+import { useState } from "react";
 import { Button } from "../../../components/Button";
+import { ApiError, apiFetch } from "../../../lib/api";
 import { formatPrice } from "../../../lib/util";
 import type { HeldSeat, Hold } from "../../../lib/queueStorage";
+import type { CheckoutResponse } from "../types";
 
 function describeSeats(seats: HeldSeat[]): string {
   const sorted = [...seats].sort((a, b) => a.seatNumber - b.seatNumber);
@@ -10,8 +13,42 @@ function describeSeats(seats: HeldSeat[]): string {
   return `Row ${first.rowLabel} · ${seatText}`;
 }
 
-export function HoldSummary({ hold }: { hold: Hold }) {
+function checkoutErrorMessage(err: unknown): string {
+  if (err instanceof ApiError && err.status === 403) {
+    return "Your shopping window has ended. Rejoin the queue to try again.";
+  }
+  if (err instanceof ApiError && err.status === 409) {
+    return "Your hold has expired. Please choose seats again.";
+  }
+  return "Couldn't start checkout. Please try again.";
+}
+
+interface HoldSummaryProps {
+  eventId: string;
+  admissionToken: string;
+  hold: Hold;
+}
+
+export function HoldSummary({ eventId, admissionToken, hold }: HoldSummaryProps) {
+  const [redirecting, setRedirecting] = useState(false);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const pricePerSeat = hold.seats[0].priceCents;
+
+  async function startCheckout() {
+    setRedirecting(true);
+    setCheckoutError(null);
+    try {
+      const { checkoutUrl } = await apiFetch<CheckoutResponse>(`/api/events/${eventId}/checkout`, {
+        method: "POST",
+        headers: { "X-Admission-Token": admissionToken },
+        body: { holdToken: hold.holdToken, seatIds: hold.seats.map((s) => s.id) },
+      });
+      window.location.assign(checkoutUrl);
+    } catch (err) {
+      setCheckoutError(checkoutErrorMessage(err));
+      setRedirecting(false);
+    }
+  }
 
   return (
     <div>
@@ -27,10 +64,12 @@ export function HoldSummary({ hold }: { hold: Hold }) {
       </div>
 
       <div className="mt-6">
-        <Button size="lg" disabled>
-          Checkout (coming next)
+        <Button size="lg" onClick={startCheckout} disabled={redirecting}>
+          {redirecting ? "Redirecting to payment…" : `Checkout · ${formatPrice(hold.totalCents)}`}
         </Button>
       </div>
+
+      {checkoutError && <p className="mt-4 text-sm text-urgent">{checkoutError}</p>}
       <p className="mt-3 text-sm text-muted">These seats are held for you until your shopping window ends.</p>
     </div>
   );
