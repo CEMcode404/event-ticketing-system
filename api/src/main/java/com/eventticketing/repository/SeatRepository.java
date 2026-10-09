@@ -9,9 +9,13 @@ import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
 import software.amazon.awssdk.enhanced.dynamodb.Expression;
 import software.amazon.awssdk.enhanced.dynamodb.Key;
 import software.amazon.awssdk.enhanced.dynamodb.TableSchema;
+import software.amazon.awssdk.enhanced.dynamodb.model.BatchWriteResult;
 import software.amazon.awssdk.enhanced.dynamodb.model.CreateTableEnhancedRequest;
 import software.amazon.awssdk.enhanced.dynamodb.model.EnhancedGlobalSecondaryIndex;
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
+import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest;
+import software.amazon.awssdk.enhanced.dynamodb.model.TransactUpdateItemEnhancedRequest;
+import software.amazon.awssdk.enhanced.dynamodb.model.WriteBatch;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 import software.amazon.awssdk.services.dynamodb.model.ConditionalCheckFailedException;
@@ -19,12 +23,11 @@ import software.amazon.awssdk.services.dynamodb.model.Projection;
 import software.amazon.awssdk.services.dynamodb.model.ProjectionType;
 import software.amazon.awssdk.services.dynamodb.model.ProvisionedThroughput;
 import software.amazon.awssdk.services.dynamodb.model.ResourceInUseException;
-import software.amazon.awssdk.services.dynamodb.model.UpdateItemRequest;
-import software.amazon.awssdk.enhanced.dynamodb.model.BatchWriteResult;
-import software.amazon.awssdk.enhanced.dynamodb.model.WriteBatch;
-import software.amazon.awssdk.enhanced.dynamodb.model.QueryEnhancedRequest;
-import software.amazon.awssdk.enhanced.dynamodb.model.TransactUpdateItemEnhancedRequest;
+import software.amazon.awssdk.services.dynamodb.model.TransactWriteItem;
+import software.amazon.awssdk.services.dynamodb.model.TransactWriteItemsRequest;
 import software.amazon.awssdk.services.dynamodb.model.TransactionCanceledException;
+import software.amazon.awssdk.services.dynamodb.model.Update;
+import software.amazon.awssdk.services.dynamodb.model.UpdateItemRequest;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -43,7 +46,7 @@ public class SeatRepository {
     private static final String GSI_NAME = "EventStatusIndex";
     private static final String SECTION_GSI_NAME = "EventSectionIndex";
 
-    private static final int BATCH_SIZE = 25;       // DynamoDB's BatchWriteItem limit
+    private static final int BATCH_SIZE = 25;
     private static final int MAX_BATCH_RETRIES = 5;
 
     private final DynamoDbEnhancedClient enhancedClient;
@@ -94,7 +97,7 @@ public class SeatRepository {
                     throw new IllegalStateException(pending.size() + " seats could not be written after retries");
                 }
                 if (attempt > 0) {
-                    sleepQuietly(50L << attempt); // 100ms, 200ms, 400ms, 800ms, 1.6s
+                    sleepQuietly(50L << attempt);
                 }
 
                 WriteBatch.Builder<Seat> builder = WriteBatch.builder(Seat.class).mappedTableResource(table);
@@ -122,6 +125,26 @@ public class SeatRepository {
                 .stream()
                 .flatMap(page -> page.items().stream())
                 .collect(Collectors.toList());
+    }
+
+    public List<Seat> findAvailableInSection(UUID eventId, String section, int limit) {
+        Expression notHeld = Expression.builder()
+                .expression("attribute_not_exists(heldUntil) OR heldUntil < :now")
+                .expressionValues(Map.of(":now", AttributeValue.fromS(Instant.now().toString())))
+                .build();
+
+        return table.index(SECTION_GSI_NAME)
+                .query(QueryEnhancedRequest.builder()
+                        .queryConditional(QueryConditional.keyEqualTo(Key.builder()
+                                .partitionValue(Seat.eventSectionKey(eventId, section))
+                                .sortValue(SeatStatus.AVAILABLE.name())
+                                .build()))
+                        .filterExpression(notHeld)
+                        .build())
+                .stream()
+                .flatMap(page -> page.items().stream())
+                .limit(limit)
+                .toList();
     }
 
     public boolean tryHoldBlock(List<String> seatIds, String holdToken, Duration ttl) {
@@ -174,24 +197,31 @@ public class SeatRepository {
         }
     }
 
-    public List<Seat> findAvailableInSection(UUID eventId, String section, int limit) {
-        Expression notHeld = Expression.builder()
-                .expression("attribute_not_exists(heldUntil) OR heldUntil < :now")
-                .expressionValues(Map.of(":now", AttributeValue.fromS(Instant.now().toString())))
-                .build();
-
-        return table.index(SECTION_GSI_NAME)
-                .query(QueryEnhancedRequest.builder()
-                        .queryConditional(QueryConditional.keyEqualTo(Key.builder()
-                                .partitionValue(Seat.eventSectionKey(eventId, section))
-                                .sortValue(SeatStatus.AVAILABLE.name())
-                                .build()))
-                        .filterExpression(notHeld)
+    public boolean trySellBlock(List<String> seatIds, String holdToken) {
+        List<TransactWriteItem> sales = seatIds.stream()
+                .map(seatId -> TransactWriteItem.builder()
+                        .update(Update.builder()
+                                .tableName(TABLE_NAME)
+                                .key(Map.of("id", AttributeValue.fromS(seatId)))
+                                .updateExpression("SET #status = :sold REMOVE heldUntil, holdToken")
+                                .conditionExpression("#status = :available AND holdToken = :token")
+                                .expressionAttributeNames(Map.of("#status", "status"))
+                                .expressionAttributeValues(Map.of(
+                                        ":sold", AttributeValue.fromS(SeatStatus.SOLD.name()),
+                                        ":available", AttributeValue.fromS(SeatStatus.AVAILABLE.name()),
+                                        ":token", AttributeValue.fromS(holdToken)))
+                                .build())
                         .build())
-                .stream()
-                .flatMap(page -> page.items().stream())
-                .limit(limit)
                 .toList();
+
+        try {
+            dynamoDbClient.transactWriteItems(TransactWriteItemsRequest.builder()
+                    .transactItems(sales)
+                    .build());
+            return true;
+        } catch (TransactionCanceledException holdLost) {
+            return false;
+        }
     }
 
     private static void sleepQuietly(long millis) {
