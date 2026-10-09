@@ -1,8 +1,11 @@
 package com.eventticketing.controller;
 
+import com.eventticketing.dto.CheckoutRequest;
+import com.eventticketing.dto.CheckoutResponse;
 import com.eventticketing.dto.HoldRequest;
 import com.eventticketing.dto.HoldResponse;
 import com.eventticketing.dto.SectionAvailabilityResponse;
+import com.eventticketing.service.CheckoutService;
 import com.eventticketing.service.SeatService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -25,9 +28,11 @@ public class ShopController {
     private static final String ADMISSION_HEADER = "X-Admission-Token";
 
     private final SeatService seatService;
+    private final CheckoutService checkoutService;
 
-    public ShopController(SeatService seatService) {
+    public ShopController(SeatService seatService, CheckoutService checkoutService) {
         this.seatService = seatService;
+        this.checkoutService = checkoutService;
     }
 
     @GetMapping("/sections")
@@ -46,5 +51,15 @@ public class ShopController {
     ) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(seatService.holdSeats(eventId, admissionToken, request));
+    }
+
+    @PostMapping("/checkout")
+    public ResponseEntity<CheckoutResponse> checkout(
+            @PathVariable UUID eventId,
+            @RequestHeader(ADMISSION_HEADER) String admissionToken,
+            @Valid @RequestBody CheckoutRequest request
+    ) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(checkoutService.startCheckout(eventId, admissionToken, request));
     }
 }

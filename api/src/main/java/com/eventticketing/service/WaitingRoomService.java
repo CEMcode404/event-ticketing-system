@@ -108,6 +108,10 @@ public class WaitingRoomService {
         return Boolean.TRUE.equals(claimed);
     }
 
+    public boolean ownsHold(UUID eventId, String admissionToken, String holdToken) {
+        return holdToken.equals(redis.opsForValue().get(holdKey(eventId, admissionToken)));
+    }
+
     public void releaseHoldSlot(UUID eventId, String admissionToken) {
         redis.delete(holdKey(eventId, admissionToken));
     }
