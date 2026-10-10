@@ -13,6 +13,7 @@ import com.stripe.net.Webhook;
 import com.stripe.param.RefundCreateParams;
 import com.stripe.param.checkout.SessionCreateParams;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ResponseStatusException;
@@ -23,6 +24,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Component
+@Profile("!loadtest")
 public class StripePaymentGateway implements PaymentGateway {
 
     private static final Duration STRIPE_MINIMUM_SESSION_LIFETIME = Duration.ofMinutes(31);
