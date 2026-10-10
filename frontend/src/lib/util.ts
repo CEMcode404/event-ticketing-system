@@ -9,8 +9,10 @@ export function toDatetimeLocal(iso: string): string {
   return local.toISOString().slice(0, 16);
 }
 
+const usd = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
+
 export function formatPrice(cents: number): string {
-  return `$${(cents / 100).toFixed(2)}`;
+  return usd.format(cents / 100);
 }
 
 export function formatCountdown(ms: number): string {

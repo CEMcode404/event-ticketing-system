@@ -15,9 +15,6 @@ spring.datasource.password=changeme
 # Prod uses ddl-auto=validate, so schema changes there go through migrations.
 spring.jpa.hibernate.ddl-auto=update
 
-admin.username=admin
-admin.password=changeme
-
 # Auth0 - your tenant domain and API identifier from the Auth0 dashboard
 spring.security.oauth2.resourceserver.jwt.issuer-uri=https://your-tenant.us.auth0.com/
 auth0.audience=https://event-ticketing-api
