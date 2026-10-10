@@ -6,6 +6,7 @@ import com.eventticketing.dto.HoldResponse;
 import com.eventticketing.dto.SeatResponse;
 import com.eventticketing.dto.SeatSummaryResponse;
 import com.eventticketing.dto.SectionAvailabilityResponse;
+import com.eventticketing.entity.Event;
 import com.eventticketing.entity.Seat;
 import com.eventticketing.enums.SeatStatus;
 import com.eventticketing.repository.EventRepository;
@@ -54,8 +55,10 @@ public class SeatService {
             );
         }
 
-        if (!eventRepository.existsById(request.eventId())) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Event not found");
+        Event event = eventRepository.findById(request.eventId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Event not found"));
+        if (event.hasStarted(Instant.now())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Ticket sales for this event have closed");
         }
 
         List<Seat> seats = new ArrayList<>();

@@ -36,6 +36,7 @@ public class EventService {
     @Transactional
     public EventResponse updateEvent(UUID eventId, CreateEventRequest request) {
         Event event = findEvent(eventId);
+        requireNotStarted(event);
 
         event.setName(request.name());
         event.setVenue(request.venue());
@@ -50,6 +51,7 @@ public class EventService {
     @Transactional
     public EventResponse updateStatus(UUID eventId, EventStatus newStatus) {
         Event event = findEvent(eventId);
+        requireNotStarted(event);
 
         if (event.getStatus() == EventStatus.CANCELLED) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cancelled events cannot change status");
@@ -90,5 +92,11 @@ public class EventService {
     private Event findEvent(UUID eventId) {
         return eventRepository.findById(eventId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Event not found"));
+    }
+
+    private static void requireNotStarted(Event event) {
+        if (event.hasStarted(Instant.now())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Ticket sales for this event have closed");
+        }
     }
 }

@@ -4,10 +4,11 @@ import type { SeatSummary } from "../types";
 
 interface SeatsPanelProps {
   summary: SeatSummary[];
+  canAddSection: boolean;
   onAddSection: () => void;
 }
 
-export function SeatsPanel({ summary, onAddSection }: SeatsPanelProps) {
+export function SeatsPanel({ summary, canAddSection, onAddSection }: SeatsPanelProps) {
   const totalSeats = summary.reduce((sum, s) => sum + s.count, 0);
 
   return (
@@ -16,9 +17,11 @@ export function SeatsPanel({ summary, onAddSection }: SeatsPanelProps) {
         <h2 className="font-display text-2xl font-bold">
           Seats {totalSeats > 0 && <span className="text-muted">({totalSeats} total)</span>}
         </h2>
-        <Button onClick={onAddSection} className="text-sm">
-          Add section
-        </Button>
+        {canAddSection && (
+          <Button onClick={onAddSection} className="text-sm">
+            Add section
+          </Button>
+        )}
       </div>
 
       {summary.length === 0 && <p className="mt-4 text-sm text-muted">No seats generated yet.</p>}

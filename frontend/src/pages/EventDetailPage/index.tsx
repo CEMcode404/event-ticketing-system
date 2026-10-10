@@ -77,6 +77,8 @@ export function EventDetailPage() {
     );
   }
 
+  const salesClosed = new Date(event.startsAt) <= new Date();
+
   return (
     <div className="min-h-svh bg-bg">
       <Navbar />
@@ -94,22 +96,28 @@ export function EventDetailPage() {
             <p className="mt-2 text-sm text-muted">On sale {formatDateTime(event.saleOpensAt)}</p>
             <p className="mt-1 text-sm text-muted">Starts {formatDateTime(event.startsAt)}</p>
           </div>
-          <span className={`rounded border border-border px-3 py-1 text-sm font-semibold ${STATUS_COLOR[event.status]}`}>
-            {event.status}
+          <span className={`rounded border border-border px-3 py-1 text-sm font-semibold ${salesClosed ? "text-muted" : STATUS_COLOR[event.status]}`}>
+            {salesClosed ? "SALES CLOSED" : event.status}
           </span>
         </div>
 
-        <div className="mt-6">
-          <StatusActions
-            status={event.status}
-            updating={updatingStatus}
-            onChangeStatus={changeStatus}
-            onEdit={() => setEditOpen(true)}
-          />
-        </div>
+        {!salesClosed && (
+          <div className="mt-6">
+            <StatusActions
+              status={event.status}
+              updating={updatingStatus}
+              onChangeStatus={changeStatus}
+              onEdit={() => setEditOpen(true)}
+            />
+          </div>
+        )}
         {statusError && <p className="mt-3 text-sm text-urgent">{statusError}</p>}
 
-        <SeatsPanel summary={seatSummary} onAddSection={() => setAddSectionOpen(true)} />
+        <SeatsPanel
+          summary={seatSummary}
+          canAddSection={!salesClosed}
+          onAddSection={() => setAddSectionOpen(true)}
+        />
       </div>
 
       <EditEventModal         
