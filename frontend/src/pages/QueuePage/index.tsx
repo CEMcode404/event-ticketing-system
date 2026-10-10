@@ -38,6 +38,7 @@ export function QueuePage() {
               <header className="mb-10 text-center">
                 <h1 className="font-display text-4xl font-bold">{event.name}</h1>
                 <p className="mt-2 text-muted">{event.venue}</p>
+                <p className="mt-1 text-sm text-muted">{formatDateTime(event.startsAt)}</p>
               </header>
             )}
 

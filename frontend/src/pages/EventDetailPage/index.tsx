@@ -92,6 +92,7 @@ export function EventDetailPage() {
             <p className="mt-2 text-muted">{event.venue}</p>
             {event.description && <p className="mt-2 max-w-lg text-sm text-muted">{event.description}</p>}
             <p className="mt-2 text-sm text-muted">On sale {formatDateTime(event.saleOpensAt)}</p>
+            <p className="mt-1 text-sm text-muted">Starts {formatDateTime(event.startsAt)}</p>
           </div>
           <span className={`rounded border border-border px-3 py-1 text-sm font-semibold ${STATUS_COLOR[event.status]}`}>
             {event.status}

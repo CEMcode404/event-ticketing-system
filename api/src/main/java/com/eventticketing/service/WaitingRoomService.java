@@ -54,6 +54,9 @@ public class WaitingRoomService {
         if (event.getStatus() != EventStatus.PUBLISHED) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Event is not on sale");
         }
+        if (event.hasStarted(Instant.now())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Ticket sales have closed");
+        }
 
         String sessionId = UUID.randomUUID().toString();
         long now = System.currentTimeMillis();
@@ -149,15 +152,17 @@ public class WaitingRoomService {
 
     public void admitIfOpen(UUID eventId) {
         Event event = eventRepository.findById(eventId).orElse(null);
+        Instant now = Instant.now();
 
-        // TODO: Event has no startsAt/end date, so a finished event that stays PUBLISHED is never
-        //  deregistered here and remains in the public listing. Add Event.startsAt and deregister
-        //  (and hide) events once it has passed.
-        if (event == null || event.getStatus() != EventStatus.PUBLISHED) {
+
+        boolean noLongerSelling = event == null
+                || event.getStatus() != EventStatus.PUBLISHED
+                || event.hasStarted(now);
+        if (noLongerSelling) {
             redis.opsForSet().remove(ACTIVE_EVENTS, eventId.toString());
             return;
         }
-        if (Instant.now().isBefore(event.getSaleOpensAt())) {
+        if (now.isBefore(event.getSaleOpensAt())) {
             return;
         }
 

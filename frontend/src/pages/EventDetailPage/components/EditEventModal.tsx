@@ -23,15 +23,20 @@ export function EditEventModal({ open, onClose, event, onSaved }: EditEventModal
   const [venue, setVenue] = useState(event.venue);
   const [description, setDescription] = useState(event.description ?? "");
   const [saleOpensAt, setSaleOpensAt] = useState(toDatetimeLocal(event.saleOpensAt));
+  const [startsAt, setStartsAt] = useState(toDatetimeLocal(event.startsAt));
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-
 
   async function handleSave(e: React.SubmitEvent) {
     e.preventDefault();
     setError(null);
-    setSaving(true);
 
+    if (new Date(saleOpensAt) >= new Date(startsAt)) {
+      setError("The sale must open before the event starts.");
+      return;
+    }
+
+    setSaving(true);
     try {
       const updated = await authedFetch<EventResponse>(`/api/admin/events/${event.id}`, {
         method: "PUT",
@@ -40,13 +45,14 @@ export function EditEventModal({ open, onClose, event, onSaved }: EditEventModal
           venue,
           description: description.trim() === "" ? null : description,
           saleOpensAt: new Date(saleOpensAt).toISOString(),
+          startsAt: new Date(startsAt).toISOString(),
         },
       });
       onSaved(updated);
       onClose();
     } catch (err) {
       if (err instanceof ApiError && err.status === 400) {
-        setError("Check the event details — sale date must be in the future.");
+        setError("Check the event details. Both dates must be in the future, and the sale must open before the event starts.");
       } else {
         setError("Something went wrong. Try again.");
       }
@@ -62,6 +68,7 @@ export function EditEventModal({ open, onClose, event, onSaved }: EditEventModal
         <TextField label="Venue" value={venue} onChange={setVenue} required className="mt-4" />
         <TextAreaField label="Description" value={description} onChange={setDescription} className="mt-4" />
         <DateTimeField label="Sale opens at" value={saleOpensAt} onChange={setSaleOpensAt} required className="mt-4" />
+        <DateTimeField label="Event starts at" value={startsAt} onChange={setStartsAt} required className="mt-4" />
 
         {error && <p className="mt-4 text-sm text-urgent">{error}</p>}
 

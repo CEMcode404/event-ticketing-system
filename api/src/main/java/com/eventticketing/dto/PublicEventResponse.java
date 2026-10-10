@@ -10,7 +10,8 @@ public record PublicEventResponse(
         String name,
         String venue,
         String description,
-        Instant saleOpensAt
+        Instant saleOpensAt,
+        Instant startsAt
 ) {
     public static PublicEventResponse from(Event event) {
         return new PublicEventResponse(
@@ -18,7 +19,8 @@ public record PublicEventResponse(
                 event.getName(),
                 event.getVenue(),
                 event.getDescription(),
-                event.getSaleOpensAt()
+                event.getSaleOpensAt(),
+                event.getStartsAt()
         );
     }
 }

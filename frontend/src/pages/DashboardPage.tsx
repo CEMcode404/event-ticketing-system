@@ -57,6 +57,7 @@ export function DashboardPage() {
                   </div>
                   <div className="flex items-center gap-4">
                     <div className="text-right">
+                      <span className="text-sm text-muted">Starts {formatDateTime(event.startsAt)}</span>
                       <span className="text-sm text-muted">On sale {formatDateTime(event.saleOpensAt)}</span>
                       <p className={`mt-0.5 text-xs font-semibold ${STATUS_COLOR[event.status]}`}>{event.status}</p>
                     </div>

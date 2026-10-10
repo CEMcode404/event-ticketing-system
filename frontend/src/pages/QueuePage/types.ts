@@ -13,4 +13,5 @@ export interface PublicEvent {
   venue: string;
   description: string | null;
   saleOpensAt: string;
+  startsAt: string;
 }

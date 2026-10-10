@@ -34,6 +34,9 @@ public class Event {
     @Column(name = "sale_opens_at", nullable = false)
     private Instant saleOpensAt;
 
+    @Column(name = "starts_at", nullable = false)
+    private Instant startsAt;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private EventStatus status = EventStatus.DRAFT;
@@ -44,16 +47,21 @@ public class Event {
     protected Event() {
     }
 
-    public Event(String name, String venue, String description, Instant saleOpensAt) {
+    public Event(String name, String venue, String description, Instant saleOpensAt, Instant startsAt) {
         this.name = name;
         this.venue = venue;
         this.description = description;
         this.saleOpensAt = saleOpensAt;
+        this.startsAt = startsAt;
     }
 
     @PrePersist
     void onCreate() {
         this.createdAt = Instant.now();
+    }
+
+    public boolean hasStarted(Instant now) {
+        return !now.isBefore(startsAt);
     }
 
     public UUID getId() {
@@ -90,6 +98,14 @@ public class Event {
 
     public void setSaleOpensAt(Instant saleOpensAt) {
         this.saleOpensAt = saleOpensAt;
+    }
+
+    public Instant getStartsAt() {
+        return startsAt;
+    }
+
+    public void setStartsAt(Instant startsAt) {
+        this.startsAt = startsAt;
     }
 
     public EventStatus getStatus() {

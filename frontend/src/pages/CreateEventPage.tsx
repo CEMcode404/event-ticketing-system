@@ -12,14 +12,20 @@ export function CreateEventPage() {
   const [venue, setVenue] = useState("");
   const [description, setDescription] = useState("");
   const [saleOpensAt, setSaleOpensAt] = useState("");
+  const [startsAt, setStartsAt] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setError(null);
-    setSubmitting(true);
 
+    if (new Date(saleOpensAt) >= new Date(startsAt)) {
+      setError("The sale must open before the event starts.");
+      return;
+    }
+
+    setSubmitting(true);
     try {
       await authedFetch("/api/admin/events", {
         method: "POST",
@@ -28,12 +34,13 @@ export function CreateEventPage() {
           venue,
           description: description.trim() === "" ? null : description,
           saleOpensAt: new Date(saleOpensAt).toISOString(),
+          startsAt: new Date(startsAt).toISOString(),
         },
       });
       navigate("/admin");
     } catch (err) {
       if (err instanceof ApiError && err.status === 400) {
-        setError("Check the event details — name, venue, and sale date (must be in the future) are required.");
+        setError("Check the event details. Both dates must be in the future, and the sale must open before the event starts.");
       } else {
         setError("Something went wrong. Try again.");
       }
@@ -90,6 +97,17 @@ export function CreateEventPage() {
               type="datetime-local"
               value={saleOpensAt}
               onChange={(e) => setSaleOpensAt(e.target.value)}
+              required
+              className="mt-1.5 w-full rounded border border-border bg-bg px-3 py-2 text-ink outline-none focus:border-accent [color-scheme:dark]"
+            />
+          </label>
+
+          <label className="mt-4 block text-sm text-muted">
+            Event starts at <span className="text-muted/60">(ticket sales close at this time)</span>
+            <input
+              type="datetime-local"
+              value={startsAt}
+              onChange={(e) => setStartsAt(e.target.value)}
               required
               className="mt-1.5 w-full rounded border border-border bg-bg px-3 py-2 text-ink outline-none focus:border-accent [color-scheme:dark]"
             />

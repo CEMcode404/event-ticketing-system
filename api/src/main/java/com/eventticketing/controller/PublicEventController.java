@@ -26,7 +26,7 @@ public class PublicEventController {
     @GetMapping
     public Page<PublicEventResponse> listPublished(
             @SortDefault.SortDefaults({
-                    @SortDefault(sort = "saleOpensAt"),
+                    @SortDefault(sort = "startsAt"),
                     @SortDefault(sort = "id")
             })
             @PageableDefault(size = 20) Pageable pageable

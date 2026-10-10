@@ -12,6 +12,7 @@ public record EventResponse(
         String venue,
         String description,
         Instant saleOpensAt,
+        Instant startsAt,
         EventStatus status,
         Instant createdAt
 ) {
@@ -22,6 +23,7 @@ public record EventResponse(
                 event.getVenue(),
                 event.getDescription(),
                 event.getSaleOpensAt(),
+                event.getStartsAt(),
                 event.getStatus(),
                 event.getCreatedAt()
         );
