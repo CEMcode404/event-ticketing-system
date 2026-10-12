@@ -33,3 +33,5 @@ aws.secret-access-key=dummy
 stripe.secret-key=sk_test_your_key_here
 stripe.webhook-secret=whsec_your_secret_here
 app.frontend-url=http://localhost:5173
+
+dynamodb.create-table=true

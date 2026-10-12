@@ -3,6 +3,7 @@ package com.eventticketing.repository;
 import com.eventticketing.entity.Seat;
 import com.eventticketing.enums.SeatStatus;
 import jakarta.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbTable;
@@ -42,7 +43,6 @@ public class SeatRepository {
 
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(SeatRepository.class);
 
-    private static final String TABLE_NAME = "Seats";
     private static final String GSI_NAME = "EventStatusIndex";
     private static final String SECTION_GSI_NAME = "EventSectionIndex";
 
@@ -52,15 +52,26 @@ public class SeatRepository {
     private final DynamoDbEnhancedClient enhancedClient;
     private final DynamoDbTable<Seat> table;
     private final DynamoDbClient dynamoDbClient;
+    private final String tableName;
+    private final boolean createTableOnStartup;
 
-    public SeatRepository(DynamoDbEnhancedClient enhancedClient, DynamoDbClient dynamoDbClient) {
+    public SeatRepository(DynamoDbEnhancedClient enhancedClient,
+                          DynamoDbClient dynamoDbClient,
+                          @Value("${dynamodb.seats-table}") String tableName,
+                          @Value("${dynamodb.create-table:false}") boolean createTableOnStartup) {
         this.enhancedClient = enhancedClient;
-        this.table = enhancedClient.table(TABLE_NAME, TableSchema.fromBean(Seat.class));
         this.dynamoDbClient = dynamoDbClient;
+        this.tableName = tableName;
+        this.createTableOnStartup = createTableOnStartup;
+        this.table = enhancedClient.table(tableName, TableSchema.fromBean(Seat.class));
     }
 
     @PostConstruct
     void ensureTableExists() {
+        if (!createTableOnStartup) {
+            return;
+        }
+
         try {
             table.createTable(CreateTableEnhancedRequest.builder()
                     .globalSecondaryIndices(gsi(GSI_NAME), gsi(SECTION_GSI_NAME))
@@ -68,7 +79,7 @@ public class SeatRepository {
         } catch (ResourceInUseException alreadyExists) {
             // table already exists
         } catch (Exception e) {
-            log.error("Could not create/verify the Seats DynamoDB table at startup", e);
+            log.error("Could not create/verify the {} DynamoDB table at startup", tableName, e);
         }
     }
 
@@ -186,7 +197,7 @@ public class SeatRepository {
     public void releaseHold(String seatId, String holdToken) {
         try {
             dynamoDbClient.updateItem(UpdateItemRequest.builder()
-                    .tableName(TABLE_NAME)
+                    .tableName(tableName)
                     .key(Map.of("id", AttributeValue.fromS(seatId)))
                     .updateExpression("REMOVE heldUntil, holdToken")
                     .conditionExpression("holdToken = :token")
@@ -201,7 +212,7 @@ public class SeatRepository {
         List<TransactWriteItem> sales = seatIds.stream()
                 .map(seatId -> TransactWriteItem.builder()
                         .update(Update.builder()
-                                .tableName(TABLE_NAME)
+                                .tableName(tableName)
                                 .key(Map.of("id", AttributeValue.fromS(seatId)))
                                 .updateExpression("SET #status = :sold, orderId = :orderId REMOVE heldUntil, holdToken")
                                 .conditionExpression("#status = :available AND holdToken = :token")
