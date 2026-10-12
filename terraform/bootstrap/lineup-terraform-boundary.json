@@ -1,0 +1,153 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "InfraServices",
+      "Effect": "Allow",
+      "Action": ["ec2:*", "rds:*", "elasticache:*", "cloudfront:*", "cloudwatch:*", "logs:*", "kms:*"],
+      "Resource": "*"
+    },
+    {
+      "Sid": "ProjectData",
+      "Effect": "Allow",
+      "Action": ["dynamodb:*", "s3:*", "ssm:*"],
+      "Resource": [
+        "arn:aws:dynamodb:ap-southeast-1:ACCOUNT_ID:table/lineup-*",
+        "arn:aws:dynamodb:ap-southeast-1:ACCOUNT_ID:table/lineup-*/index/*",
+        "arn:aws:s3:::lineup-*",
+        "arn:aws:s3:::lineup-*/*",
+        "arn:aws:ssm:ap-southeast-1:ACCOUNT_ID:parameter/lineup/*"
+      ]
+    },
+    {
+      "Sid": "GlobalReads",
+      "Effect": "Allow",
+      "Action": [
+        "s3:ListAllMyBuckets",
+        "ssm:DescribeParameters",
+        "ssm:StartSession",
+        "ssm:TerminateSession",
+        "ssm:ResumeSession",
+        "ssm:DescribeSessions",
+        "ssm:GetConnectionStatus",
+        "iam:Get*",
+        "iam:List*",
+        "iam:CreateServiceLinkedRole"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "ProjectIdentities",
+      "Effect": "Allow",
+      "Action": "iam:*",
+      "Resource": [
+        "arn:aws:iam::ACCOUNT_ID:role/lineup-*",
+        "arn:aws:iam::ACCOUNT_ID:instance-profile/lineup-*"
+      ]
+    },
+    {
+      "Sid": "RegionLock",
+      "Effect": "Deny",
+      "NotAction": ["iam:*", "cloudfront:*", "sts:*"],
+      "Resource": "*",
+      "Condition": {
+        "StringNotEquals": { "aws:RequestedRegion": "ap-southeast-1" }
+      }
+    },
+    {
+      "Sid": "DenyIdentityTampering",
+      "Effect": "Deny",
+      "Action": [
+        "iam:CreateUser",
+        "iam:DeleteUser",
+        "iam:UpdateUser",
+        "iam:CreateAccessKey",
+        "iam:UpdateAccessKey",
+        "iam:DeleteAccessKey",
+        "iam:CreateLoginProfile",
+        "iam:UpdateLoginProfile",
+        "iam:AttachUserPolicy",
+        "iam:DetachUserPolicy",
+        "iam:PutUserPolicy",
+        "iam:DeleteUserPolicy",
+        "iam:PutUserPermissionsBoundary",
+        "iam:DeleteUserPermissionsBoundary",
+        "iam:CreateGroup",
+        "iam:AddUserToGroup",
+        "iam:RemoveUserFromGroup",
+        "iam:AttachGroupPolicy",
+        "iam:PutGroupPolicy",
+        "iam:CreatePolicy",
+        "iam:CreatePolicyVersion",
+        "iam:DeletePolicy",
+        "iam:DeletePolicyVersion",
+        "iam:SetDefaultPolicyVersion",
+        "iam:DeleteRolePermissionsBoundary",
+        "iam:CreateServiceSpecificCredential",
+        "iam:UploadSSHPublicKey",
+        "iam:UploadSigningCertificate",
+        "organizations:*",
+        "account:*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "DenyRolesWithoutBoundary",
+      "Effect": "Deny",
+      "Action": [
+        "iam:CreateRole",
+        "iam:PutRolePolicy",
+        "iam:AttachRolePolicy",
+        "iam:PutRolePermissionsBoundary"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "StringNotEquals": {
+          "iam:PermissionsBoundary": "arn:aws:iam::ACCOUNT_ID:policy/lineup-workload-boundary"
+        }
+      }
+    },
+    {
+      "Sid": "DenyAssumingRoles",
+      "Effect": "Deny",
+      "Action": "sts:AssumeRole",
+      "Resource": "*"
+    },
+    {
+      "Sid": "DenyUnapprovedInstanceTypes",
+      "Effect": "Deny",
+      "Action": "ec2:RunInstances",
+      "Resource": "arn:aws:ec2:*:*:instance/*",
+      "Condition": {
+        "StringNotEquals": {
+          "ec2:InstanceType": ["t4g.small", "t4g.medium", "c7g.large", "c7g.xlarge", "c7g.2xlarge"]
+        }
+      }
+    },
+    {
+      "Sid": "DenyUnapprovedDbClasses",
+      "Effect": "Deny",
+      "Action": ["rds:CreateDBInstance", "rds:ModifyDBInstance"],
+      "Resource": "*",
+      "Condition": {
+        "Null": { "rds:DatabaseClass": "false" },
+        "StringNotEquals": { "rds:DatabaseClass": ["db.t4g.micro", "db.t4g.small"] }
+      }
+    },
+    {
+      "Sid": "DenyUnapprovedCacheNodes",
+      "Effect": "Deny",
+      "Action": [
+        "elasticache:CreateCacheCluster",
+        "elasticache:CreateReplicationGroup",
+        "elasticache:ModifyCacheCluster",
+        "elasticache:ModifyReplicationGroup"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "Null": { "elasticache:CacheNodeType": "false" },
+        "StringNotEquals": { "elasticache:CacheNodeType": ["cache.t4g.micro", "cache.t4g.small"] }
+      }
+    }
+  ]
+}
