@@ -1,0 +1,4 @@
+auth0_domain          = "your-tenant.us.auth0.com"
+auth0_audience        = "https://lineup.carlomiradorjr.com"
+stripe_secret_key     = "sk_test_replace_me"
+stripe_webhook_secret = "whsec_placeholder_until_step_6"

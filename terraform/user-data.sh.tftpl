@@ -1,0 +1,52 @@
+#!/bin/bash
+set -euo pipefail
+
+dnf install -y java-25-amazon-corretto-headless || {
+  mkdir -p /opt/java
+  curl -fsSL https://corretto.aws/downloads/latest/amazon-corretto-25-aarch64-linux-jdk.tar.gz \
+    | tar -xz -C /opt/java --strip-components=1
+  ln -sf /opt/java/bin/java /usr/bin/java
+}
+
+useradd --system --home-dir /opt/lineup --shell /sbin/nologin lineup || true
+mkdir -p /opt/lineup
+
+cat > /opt/lineup/start.sh <<'EOF'
+#!/bin/bash
+set -euo pipefail
+cd /opt/lineup
+
+aws s3 cp "s3://${artifact_bucket}/api.jar" api.jar --region "${region}" --only-show-errors
+
+for name in ${parameter_names}; do
+  value=$(aws ssm get-parameter --name "/${project}/$name" --with-decryption \
+    --region "${region}" --query Parameter.Value --output text)
+  key=$(echo "$name" | tr '/-' '__' | tr '[:lower:]' '[:upper:]')
+  export "$key=$value"
+done
+
+export AWS_REGION="${region}"
+exec java -XX:MaxRAMPercentage=70 -jar api.jar --spring.profiles.active=${spring_profiles}
+EOF
+
+chmod 750 /opt/lineup/start.sh
+chown -R lineup:lineup /opt/lineup
+
+cat > /etc/systemd/system/lineup-api.service <<'EOF'
+[Unit]
+Description=Lineup API
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=lineup
+ExecStart=/opt/lineup/start.sh
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl daemon-reload
+systemctl enable --now lineup-api
