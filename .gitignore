@@ -39,3 +39,8 @@ frontend/build/
 .env.*
 
 application-local.properties
+
+# --- Python ---
+.venv/
+__pycache__/
+*.pyc

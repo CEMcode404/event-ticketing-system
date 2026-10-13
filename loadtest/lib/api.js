@@ -46,11 +46,12 @@ export function holdSeats(eventId, admissionToken, section, quantity) {
     `${BASE_URL}/api/events/${eventId}/holds`,
     JSON.stringify({ section, quantity }),
     {
-      headers: { ...JSON_HEADERS, "X-Admission-Token": admissionToken },
-      tags: { name: "hold" },
-    }
-  );
-}
+        headers: { ...JSON_HEADERS, "X-Admission-Token": admissionToken },
+        tags: { name: "hold" },
+        responseCallback: http.expectedStatuses(201, 409),
+      }
+    );
+  }
 
 export function startCheckout(eventId, admissionToken, holdToken, seatIds) {
   return http.post(
