@@ -13,3 +13,15 @@ output "api_instance_id" {
 output "artifact_bucket" {
   value = aws_s3_bucket.artifacts.id
 }
+
+output "app_url" {
+  value = local.app_url
+}
+
+output "cloudfront_distribution_id" {
+  value = aws_cloudfront_distribution.main.id
+}
+
+output "frontend_bucket" {
+  value = aws_s3_bucket.frontend.id
+}
