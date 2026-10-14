@@ -8,7 +8,7 @@ import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration;
 import software.amazon.awssdk.core.retry.RetryMode;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedClient;
-import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
+import software.amazon.awssdk.http.apache.ApacheHttpClient;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClientBuilder;
@@ -40,7 +40,9 @@ public class DynamoDbConfig {
     public DynamoDbClient dynamoDbClient() {
         DynamoDbClientBuilder builder = DynamoDbClient.builder()
                 .region(Region.of(region))
-                .httpClient(UrlConnectionHttpClient.create())
+                .httpClient(ApacheHttpClient.builder()
+                        .maxConnections(100)
+                        .build())
                 .overrideConfiguration(ClientOverrideConfiguration.builder()
                         .apiCallTimeout(Duration.ofSeconds(6))
                         .apiCallAttemptTimeout(Duration.ofSeconds(3))
