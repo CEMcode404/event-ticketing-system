@@ -42,6 +42,7 @@ def load_order_seats():
         user=os.environ.get("DB_USERNAME", "app_admin"),
         password=os.environ.get("DB_PASSWORD", "changeme"),
         database=os.environ.get("DB_NAME", "waitingroom"),
+        ssl_ca=os.environ.get("DB_SSL_CA"),
     )
     with connection, connection.cursor() as cursor:
         cursor.execute(

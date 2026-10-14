@@ -13,3 +13,11 @@ output "api_instance_id" {
 output "artifact_bucket" {
   value = aws_s3_bucket.artifacts.id
 }
+
+output "api_private_ip" {
+  value = aws_instance.api.private_ip
+}
+
+output "loadtest_instance_id" {
+  value = one(aws_instance.loadtest[*].id)
+}

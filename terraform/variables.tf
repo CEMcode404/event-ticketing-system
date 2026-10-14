@@ -40,3 +40,13 @@ variable "frontend_url" {
   type    = string
   default = "http://localhost:5173"
 }
+
+variable "loadtest_runner_enabled" {
+  type    = bool
+  default = false
+}
+
+variable "loadtest_runner_instance_type" {
+  type    = string
+  default = "c7g.2xlarge"
+}
