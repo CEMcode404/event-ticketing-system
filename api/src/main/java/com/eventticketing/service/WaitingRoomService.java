@@ -5,6 +5,8 @@ import com.eventticketing.dto.QueueStatusResponse;
 import com.eventticketing.entity.Event;
 import com.eventticketing.enums.EventStatus;
 import com.eventticketing.repository.EventRepository;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
@@ -31,6 +33,7 @@ public class WaitingRoomService {
     private final Duration heartbeatTimeout;
     private final Duration admissionTtl;
     private final int maxActiveShoppers;
+    private final Cache<UUID, Event> eventCache;
 
     public WaitingRoomService(
             StringRedisTemplate redis,
@@ -38,7 +41,8 @@ public class WaitingRoomService {
             @Value("${waitingroom.admit-batch-size:50}") int admitBatchSize,
             @Value("${waitingroom.heartbeat-timeout-seconds:30}") long heartbeatTimeoutSeconds,
             @Value("${waitingroom.admission-ttl-minutes:10}") long admissionTtlMinutes,
-            @Value("${waitingroom.max-active-shoppers:500}") int maxActiveShoppers
+            @Value("${waitingroom.max-active-shoppers:500}") int maxActiveShoppers,
+            @Value("${waitingroom.event-cache-seconds:5}") long eventCacheSeconds
     ) {
         this.redis = redis;
         this.eventRepository = eventRepository;
@@ -46,11 +50,17 @@ public class WaitingRoomService {
         this.heartbeatTimeout = Duration.ofSeconds(heartbeatTimeoutSeconds);
         this.admissionTtl = Duration.ofMinutes(admissionTtlMinutes);
         this.maxActiveShoppers = maxActiveShoppers;
+        this.eventCache = Caffeine.newBuilder()
+                .expireAfterWrite(Duration.ofSeconds(eventCacheSeconds))
+                .maximumSize(1_000)
+                .build();
     }
 
     public QueueJoinResponse join(UUID eventId) {
-        Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Event not found"));
+        Event event = eventCache.get(eventId, id -> eventRepository.findById(id).orElse(null));
+        if (event == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Event not found");
+        }
         if (event.getStatus() != EventStatus.PUBLISHED) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Event is not on sale");
         }
