@@ -1,0 +1,37 @@
+# Scenario 1, run 2: Fix 1, Tomcat connection limits
+# Command: k6 run -e BASE_URL=$BASE_URL -e EVENT_ID=$EVENT_ID -e USERS=10000 -e JOIN_WINDOW=60 loadtest/scenarios/queue-surge.js
+# Change: server.tomcat.max-connections=20000, server.tomcat.accept-count=1000
+
+  █ THRESHOLDS
+    http_req_duration{name:join}
+    ✗ 'p(95)<500' p(95)=899.28ms
+    http_req_duration{name:status}
+    ✓ 'p(95)<300' p(95)=71.46ms
+    http_req_failed
+    ✓ 'rate<0.01' rate=0.00%
+  █ TOTAL RESULTS
+    checks_total.......: 587034  2438.991137/s
+    checks_succeeded...: 100.00% 587034 out of 587034
+    checks_failed......: 0.00%   0 out of 587034
+    ✓ join is 200
+    ✓ status is 200
+    CUSTOM
+    time_to_admission..............: avg=42.23s   min=6.97s  med=43.76s  max=1m6s     p(90)=1m0s     p(95)=1m6s
+    users_admitted.................: 500    2.077385/s
+    users_timed_out................: 9500   39.470313/s
+    HTTP
+    http_req_duration..............: avg=22.11ms  min=2.59ms med=6.69ms  max=1.12s    p(90)=31.06ms  p(95)=89.8ms
+      { expected_response:true }...: avg=22.11ms  min=2.59ms med=6.69ms  max=1.12s    p(90)=31.06ms  p(95)=89.8ms
+      { name:join }................: avg=234.21ms min=9.06ms med=71.52ms max=1.12s    p(90)=772.37ms p(95)=899.28ms
+      { name:status }..............: avg=18.44ms  min=2.59ms med=6.61ms  max=716.65ms p(90)=28.16ms  p(95)=71.46ms
+    http_req_failed................: 0.00%  0 out of 587034
+    http_reqs......................: 587034 2438.991137/s
+    EXECUTION
+    iteration_duration.............: avg=3m24s    min=6.99s  med=3m30s   max=4m0s     p(90)=3m54s    p(95)=3m57s
+    iterations.....................: 10000  41.547698/s
+    vus............................: 171    min=0           max=10000
+    vus_max........................: 10000  min=8500        max=10000
+    NETWORK
+    data_received..................: 270 MB 1.1 MB/s
+    data_sent......................: 105 MB 435 kB/s
+ERRO[0242] thresholds on metrics 'http_req_duration{name:join}' have been crossed

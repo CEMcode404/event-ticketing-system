@@ -1,0 +1,36 @@
+# Scenario 1, run 1: baseline (Tomcat defaults)
+# Command: k6 run -e BASE_URL=$BASE_URL -e EVENT_ID=$EVENT_ID -e USERS=10000 -e JOIN_WINDOW=60 loadtest/scenarios/queue-surge.js
+
+  █ THRESHOLDS
+    http_req_duration{name:join}
+    ✗ 'p(95)<500' p(95)=1.39s
+    http_req_duration{name:status}
+    ✓ 'p(95)<300' p(95)=136.69ms
+    http_req_failed
+    ✓ 'rate<0.01' rate=0.33%
+  █ TOTAL RESULTS
+    checks_total.......: 489517 1751.427896/s
+    checks_succeeded...: 99.66% 487895 out of 489517
+    checks_failed......: 0.33%  1622 out of 489517
+    ✗ join is 200
+      ↳  83% — ✓ 8378 / ✗ 1622
+    ✓ status is 200
+    CUSTOM
+    time_to_admission..............: avg=45.61s   min=3.99s  med=48.16s   max=1m11s  p(90)=1m5s    p(95)=1m10s
+    users_admitted.................: 500    1.788935/s
+    users_timed_out................: 7878   28.186455/s
+    HTTP
+    http_req_duration..............: avg=43.44ms  min=0s     med=5.58ms   max=42.99s p(90)=39.48ms p(95)=179.75ms
+      { expected_response:true }...: avg=42.31ms  min=2.63ms med=5.59ms   max=42.99s p(90)=39.69ms p(95)=179.91ms
+      { name:join }................: avg=936.09ms min=0s     med=271.86ms max=42.99s p(90)=1.24s   p(95)=1.39s
+      { name:status }..............: avg=24.82ms  min=2.63ms med=5.54ms   max=1.15s  p(90)=30.79ms p(95)=136.69ms
+    http_req_failed................: 0.33%  1622 out of 489517
+    http_reqs......................: 489517 1751.427896/s
+    EXECUTION
+    iteration_duration.............: avg=3m0s     min=4s     med=3m21s    max=4m39s  p(90)=3m44s   p(95)=3m47s
+    iterations.....................: 10000  35.778694/s
+    vus............................: 36     min=0              max=10000
+    vus_max........................: 10000  min=8156           max=10000
+    NETWORK
+    data_received..................: 224 MB 803 kB/s
+    data_sent......................: 87 MB  311 kB/s

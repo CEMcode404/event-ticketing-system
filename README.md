@@ -15,7 +15,7 @@ Measured on AWS against a single `t4g.small` API instance (2 vCPU, 2 GB):
 | 500 shoppers competing for 1,000 seats | 0 double bookings, verified against both databases |
 | Arrivals ramping up to 800 users/s | ~12,000 concurrent users, ~3,700 req/s, 0 errors |
 
-Three bottlenecks were found and fixed along the way. Raw outputs and notes: [`loadtest/results/`](loadtest/results/).
+Three bottlenecks were found and fixed along the way. Full results, raw outputs and screenshots: [`loadtest/results/2026-10-14/`](loadtest/results/2026-10-14/).
 
 ## Architecture
 

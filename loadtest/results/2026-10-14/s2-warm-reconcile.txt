@@ -1,0 +1,8 @@
+# Reconciliation for s2-warm (transcribed from images/s2-warm-reconcile.png)
+Event 204e726f-66cc-41ba-ada6-7bb5875f7976
+  seats total:        1000
+  seats sold:         935
+  seats in paid orders: 935
+  orders by status:   {'PAID': 406}
+
+PASS: every sold seat belongs to exactly one paid order, 0 double bookings

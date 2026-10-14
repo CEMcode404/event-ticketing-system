@@ -1,0 +1,7 @@
+# Reconciliation for s2-fix3
+Event 2dbf5d2a-6c23-4f28-b004-0cd527cb1c6b
+  seats total:        1000
+  seats sold:         934
+  seats in paid orders: 934
+  orders by status:   {'PAID': 413}
+PASS: every sold seat belongs to exactly one paid order, 0 double bookings

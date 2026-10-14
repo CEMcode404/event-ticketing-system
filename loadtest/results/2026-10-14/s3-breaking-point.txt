@@ -1,0 +1,28 @@
+# Scenario 3: breaking point (ramping arrival rate)
+# Command: k6 run -e BASE_URL=$BASE_URL -e EVENT_ID=$EVENT_ID -e RATES=50,100,200,400,800 -e STEP_SECONDS=60 -e MAX_VUS=12000 loadtest/scenarios/breaking-point.js
+
+  █ THRESHOLDS
+    http_req_duration
+    ✓ 'p(95)<1000' p(95)=843.56ms
+    http_req_failed
+    ✓ 'rate<0.05' rate=0.00%
+  █ TOTAL RESULTS
+    checks_total.......: 851814  1383.410277/s
+    checks_succeeded...: 100.00% 851814 out of 851814
+    checks_failed......: 0.00%   0 out of 851814
+    ✓ join is 200
+    ✓ status is 200
+    HTTP
+    http_req_duration..............: avg=187.48ms min=2.43ms med=6.76ms max=1.11s  p(90)=761.93ms p(95)=843.56ms
+      { expected_response:true }...: avg=187.48ms min=2.43ms med=6.76ms max=1.11s  p(90)=761.93ms p(95)=843.56ms
+    http_req_failed................: 0.00%  0 out of 851814
+    http_reqs......................: 851814 1383.410277/s
+    EXECUTION
+    dropped_iterations.............: 20059  32.577331/s
+    iteration_duration.............: avg=16.12s   min=15.02s med=15.04s max=20.07s p(90)=19.49s   p(95)=19.72s
+    iterations.....................: 141969 230.56838/s
+    vus............................: 578    min=1           max=12000
+    vus_max........................: 12000  min=200         max=12000
+    NETWORK
+    data_received..................: 401 MB 651 kB/s
+    data_sent......................: 147 MB 239 kB/s

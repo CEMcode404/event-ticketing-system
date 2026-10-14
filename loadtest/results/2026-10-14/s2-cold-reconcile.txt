@@ -1,0 +1,7 @@
+# Reconciliation for s2-cold
+Event 2384c566-0492-46f8-9c90-0960db9bc2e9
+  seats total:        1000
+  seats sold:         924
+  seats in paid orders: 924
+  orders by status:   {'PAID': 404, 'REFUNDED': 2}
+PASS: every sold seat belongs to exactly one paid order, 0 double bookings

@@ -1,0 +1,44 @@
+# Scenario 2, run 2: warm, same code
+# Command: k6 run -e BASE_URL=$BASE_URL -e EVENT_ID=$EVENT_ID -e SECTION=VIP -e SHOPPERS=500 loadtest/scenarios/seat-contention.js
+
+  █ THRESHOLDS
+    checks
+    ✓ 'rate>0.99' rate=100.00%
+    http_req_duration{name:checkout}
+    ✓ 'p(95)<1000' p(95)=525.27ms
+    http_req_duration{name:fake_payment}
+    ✓ 'p(95)<1000' p(95)=300.51ms
+    http_req_duration{name:hold}
+    ✓ 'p(95)<1000' p(95)=780.88ms
+    http_req_failed
+    ✓ 'rate<0.01' rate=0.00%
+  █ TOTAL RESULTS
+    checks_total.......: 6812    118.636456/s
+    checks_succeeded...: 100.00% 6812 out of 6812
+    checks_failed......: 0.00%   0 out of 6812
+    ✓ join is 200
+    ✓ status is 200
+    ✓ sections is 200
+    ✓ checkout is 201
+    ✓ payment is 204
+    CUSTOM
+    holds_lost.....................: 282    4.911257/s
+    holds_won......................: 406    7.070816/s
+    payments_completed.............: 406    7.070816/s
+    seats_bought...................: 935    16.283777/s
+    HTTP
+    http_req_duration..............: avg=71.72ms  min=2.56ms  med=7.03ms  max=1.25s    p(90)=236.38ms p(95)=388.48ms
+      { expected_response:true }...: avg=71.72ms  min=2.56ms  med=7.03ms  max=1.25s    p(90)=236.38ms p(95)=388.48ms
+      { name:checkout }............: avg=163.03ms min=18.56ms med=70.25ms max=957.53ms p(90)=427.03ms p(95)=525.27ms
+      { name:fake_payment }........: avg=82.79ms  min=24.85ms med=38.43ms max=664.27ms p(90)=190.71ms p(95)=300.51ms
+      { name:hold }................: avg=173.26ms min=10.13ms med=54.46ms max=1.25s    p(90)=539.81ms p(95)=780.88ms
+    http_req_failed................: 0.00%  0 out of 7500
+    http_reqs......................: 7500   130.618529/s
+    EXECUTION
+    iteration_duration.............: avg=29.97s   min=3.89s   med=28.72s  max=57.41s   p(90)=50.53s   p(95)=55.34s
+    iterations.....................: 500    8.707902/s
+    vus............................: 4      min=4         max=500
+    vus_max........................: 500    min=500       max=500
+    NETWORK
+    data_received..................: 3.6 MB 63 kB/s
+    data_sent......................: 1.5 MB 26 kB/s

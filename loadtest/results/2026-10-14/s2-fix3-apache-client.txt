@@ -1,0 +1,44 @@
+# Scenario 2, run 3: Fix 3, pooled Apache HTTP client for DynamoDB (after a discarded warm-up run)
+# Command: k6 run -e BASE_URL=$BASE_URL -e EVENT_ID=$EVENT_ID -e SECTION=VIP -e SHOPPERS=500 loadtest/scenarios/seat-contention.js
+
+  █ THRESHOLDS
+    checks
+    ✓ 'rate>0.99' rate=100.00%
+    http_req_duration{name:checkout}
+    ✓ 'p(95)<1000' p(95)=414.38ms
+    http_req_duration{name:fake_payment}
+    ✓ 'p(95)<1000' p(95)=302.76ms
+    http_req_duration{name:hold}
+    ✓ 'p(95)<1000' p(95)=481.91ms
+    http_req_failed
+    ✓ 'rate<0.01' rate=0.00%
+  █ TOTAL RESULTS
+    checks_total.......: 6445    117.780377/s
+    checks_succeeded...: 100.00% 6445 out of 6445
+    checks_failed......: 0.00%   0 out of 6445
+    ✓ join is 200
+    ✓ status is 200
+    ✓ sections is 200
+    ✓ checkout is 201
+    ✓ payment is 204
+    CUSTOM
+    holds_lost.....................: 261    4.769694/s
+    holds_won......................: 413    7.547447/s
+    payments_completed.............: 413    7.547447/s
+    seats_bought...................: 934    17.06856/s
+    HTTP
+    http_req_duration..............: avg=76.89ms  min=2.57ms  med=12.91ms  max=714.35ms p(90)=251.41ms p(95)=335.07ms
+      { expected_response:true }...: avg=76.89ms  min=2.57ms  med=12.91ms  max=714.35ms p(90)=251.41ms p(95)=335.07ms
+      { name:checkout }............: avg=183.6ms  min=19.88ms med=170.13ms max=592.37ms p(90)=353.38ms p(95)=414.38ms
+      { name:fake_payment }........: avg=96.23ms  min=24.78ms med=62.01ms  max=409.43ms p(90)=221.12ms p(95)=302.76ms
+      { name:hold }................: avg=164.68ms min=9.95ms  med=86.87ms  max=714.35ms p(90)=409.46ms p(95)=481.91ms
+    http_req_failed................: 0.00%  0 out of 7119
+    http_reqs......................: 7119   130.097518/s
+    EXECUTION
+    iteration_duration.............: avg=27.73s   min=3.85s   med=27.54s   max=54.71s   p(90)=48.05s   p(95)=52.88s
+    iterations.....................: 500    9.137345/s
+    vus............................: 7      min=7         max=500
+    vus_max........................: 500    min=500       max=500
+    NETWORK
+    data_received..................: 3.4 MB 63 kB/s
+    data_sent......................: 1.4 MB 26 kB/s
