@@ -1,100 +1,86 @@
 # Lineup - Event Ticketing System
 
-## Prerequisites
+[![Backend CI](https://github.com/CEMcode404/event-ticketing-system/actions/workflows/backend-ci.yml/badge.svg)](https://github.com/CEMcode404/event-ticketing-system/actions/workflows/backend-ci.yml)
+[![Frontend CI](https://github.com/CEMcode404/event-ticketing-system/actions/workflows/frontend-ci.yml/badge.svg)](https://github.com/CEMcode404/event-ticketing-system/actions/workflows/frontend-ci.yml)
 
-- Java 25
-- Node.js 22+ and pnpm
-- Docker Desktop
+A Ticketmaster-style ticket sale with a virtual waiting room. Visitors join a queue, get admitted in controlled batches, hold seats, and pay through Stripe. Deployed to AWS with Terraform and load-tested with k6.
+
+## Results
+
+Measured on AWS against a single `t4g.small` API instance (2 vCPU, 2 GB):
+
+| Test | Result |
+|---|---|
+| 10,000 users joining a queue within 60 s | 0 errors, join p95 47 ms |
+| 500 shoppers competing for 1,000 seats | 0 double bookings, verified against both databases |
+| Arrivals ramping up to 800 users/s | ~12,000 concurrent users, ~3,700 req/s, 0 errors |
+
+Three bottlenecks were found and fixed along the way. Raw outputs and notes: [`loadtest/results/`](loadtest/results/).
+
+## Architecture
+
+```mermaid
+flowchart LR
+    user[Browser] -->|HTTPS| cf[CloudFront]
+    cf -->|"/*"| s3[(S3<br/>React build)]
+    cf -->|"/api/*"| api[Spring Boot API<br/>EC2]
+    api --> redis[(Redis<br/>waiting room)]
+    api --> rds[(MySQL<br/>events, orders)]
+    api --> ddb[(DynamoDB<br/>seats)]
+    api <-->|checkout, webhook| stripe[Stripe]
+```
+
+- **No double bookings by design:** every hold and sale is a DynamoDB conditional transaction, so a race fails and retries instead of overselling.
+- **The waiting room bounds load:** at most 500 people shop at once, however large the queue.
+- **Webhook as source of truth:** orders are paid only via Stripe's webhook, with idempotent fulfillment and automatic refunds if a hold expired.
+- **Least-privilege infrastructure:** Terraform runs as a restricted IAM user with permissions boundaries; no SSH, secrets in SSM.
+
+## Tech stack
+
+Java 25 · Spring Boot 4 · React 19 · TypeScript · Tailwind CSS · MySQL · DynamoDB · Redis · Stripe · Auth0 · Terraform · AWS · k6 · Testcontainers · GitHub Actions
+
+## Running locally
+
+### Prerequisites
+
+- Java 25, Node.js 22+ with pnpm, Docker Desktop
 - [Stripe CLI](https://docs.stripe.com/stripe-cli) (`brew install stripe/stripe-cli/stripe`)
 - An [Auth0](https://auth0.com) tenant with a SPA application and an API
-- A [Stripe](https://stripe.com) account in test mode (sandbox)
+- A [Stripe](https://stripe.com) account in test mode
 
-## Setup (first time only)
-
-### 1. Backend config
+### Setup (first time only)
 
 ```bash
 cp api/src/main/resources/application-local.properties.example api/src/main/resources/application-local.properties
-```
-
-Fill in your own values in `application-local.properties`:
-
-- **Auth0:** issuer URI and API audience
-- **Stripe:** test secret key (`sk_test_...`) from Dashboard > Developers > API keys
-- **Stripe webhook secret:** printed by `stripe listen` in step 2 of "Running the project" (`whsec_...`)
-
-This file is git-ignored, so your keys stay local.
-
-### 2. Frontend config
-
-```bash
 cp frontend/.env.local.example frontend/.env.local
-```
-
-Fill in your Auth0 domain, client ID, and audience.
-
-### 3. Stripe CLI
-
-```bash
 stripe login
 ```
 
-## Running the project
+Fill in your Auth0 values and Stripe test key in both files. The webhook secret (`whsec_...`) is printed by `stripe listen` below. Both files are git-ignored.
 
-Use four terminal tabs.
+### Run
 
-**1. Infrastructure** (MySQL, Redis, DynamoDB Local)
-
-```bash
-docker compose up -d
-```
-
-Wait until `docker compose ps` shows mysql as `healthy`.
-
-**2. Stripe webhooks** (keep running)
+Use four terminal tabs:
 
 ```bash
-stripe listen --events checkout.session.completed,checkout.session.expired --forward-to localhost:8080/api/webhooks/stripe
+docker compose up -d                  # 1. MySQL, Redis, DynamoDB Local
+
+stripe listen --events checkout.session.completed,checkout.session.expired \
+  --forward-to localhost:8080/api/webhooks/stripe        # 2. webhooks
+
+cd api && ./mvnw spring-boot:run -Dspring-boot.run.profiles=local   # 3. API
+
+cd frontend && pnpm install && pnpm dev                  # 4. frontend
 ```
 
-**3. API**
+Open http://localhost:5173, sign in at `/admin/login`, create and publish an event, then join its queue from a private window. Pay with Stripe's test card `4242 4242 4242 4242`.
+
+### Useful commands
 
 ```bash
-cd api
-./mvnw spring-boot:run -Dspring-boot.run.profiles=local
+docker compose down -v        # reset all local data
+cd api && ./mvnw test         # backend tests (needs Docker)
+pnpm lint && pnpm build       # frontend checks (from frontend/)
 ```
 
-**4. Frontend**
-
-```bash
-cd frontend
-pnpm install
-pnpm dev
-```
-
-Open http://localhost:5173.
-
-## Trying it out
-
-1. Sign in at `/admin/login` and create an event (sale time a few minutes from now).
-2. Add a section, then publish the event.
-3. Open the home page in a private window and join the event's queue.
-4. When admitted, hold seats and check out.
-5. Pay with Stripe's test card: `4242 4242 4242 4242`, any future expiry, any CVC.
-
-## Local ports
-
-| Service | Port |
-|---|---|
-| Frontend | 5173 |
-| API | 8080 |
-| MySQL | 3306 |
-| Redis | 6379 |
-| DynamoDB Local | 8000 |
-
-## Useful commands
-
-```bash
-docker compose down -v                # reset all local data
-pnpm lint && pnpm build               # check the frontend (from frontend/)
-```
+Load testing and AWS deployment: see [`loadtest/`](loadtest/) and [`terraform/`](terraform/).
